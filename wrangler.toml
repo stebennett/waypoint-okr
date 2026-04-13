@@ -1,0 +1,8 @@
+name = "waypoint-okr"
+compatibility_date = "2026-04-13"
+compatibility_flags = ["nodejs_compat"]
+
+# Note: SQLite is not available on Cloudflare Pages.
+# This deployment is for the UI/frontend only.
+# For full functionality with a database, use the Docker image.
+# For Cloudflare with a real DB, migrate to Cloudflare D1 (see README).
