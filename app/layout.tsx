@@ -4,6 +4,7 @@ import './globals.css'
 import { Nav } from './components/Nav'
 import { getSession } from "@/lib/auth/session"
 import { signOut } from "@/lib/auth/config"
+import Link from "next/link"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -26,9 +27,12 @@ export default async function RootLayout({
             <span className="text-sm text-gray-600">
               Signed in as <strong>{session.user.email}</strong> ({(session.user as { role?: string }).role})
             </span>
-            <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }) }}>
-              <button className="text-sm text-indigo-600 hover:underline">Sign out</button>
-            </form>
+            <div className="flex items-center gap-4">
+              <Link href="/account" className="text-sm text-indigo-600 hover:underline">Account</Link>
+              <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }) }}>
+                <button className="text-sm text-indigo-600 hover:underline">Sign out</button>
+              </form>
+            </div>
           </header>
         )}
         <Nav />
