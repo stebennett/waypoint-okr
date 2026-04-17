@@ -1,5 +1,3 @@
-import { auth } from "@/lib/auth/config"
-
 export type Role = "viewer" | "okr_manager" | "admin"
 
 export const ROLE_ORDER: Record<Role, number> = {
@@ -23,6 +21,7 @@ export function hasRole(
 }
 
 export async function requireAuth() {
+  const { auth } = await import("@/lib/auth/config")
   const session = await auth()
   if (!session?.user) throw new HttpError(401, "Unauthorized")
   return session
