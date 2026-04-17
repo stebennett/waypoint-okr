@@ -12,7 +12,6 @@ interface CheckIn {
   progress: number
   confidence: number
   notes?: string | null
-  checkedInBy?: string | null
   createdAt: string | Date
 }
 
@@ -73,7 +72,6 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
     })
     return data
   })
-  const [checkedInBy, setCheckedInBy] = useState('')
   const [closeNote, setCloseNote] = useState('')
   const [closingKRScores, setClosingKRScores] = useState<Record<string, string>>(() => {
     const scores: Record<string, string> = {}
@@ -131,7 +129,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
       const res = await fetch('/api/check-ins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ checkIns, checkedInBy }),
+        body: JSON.stringify({ checkIns }),
       })
       if (res.ok) {
         // Refresh objective data
@@ -307,15 +305,6 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
         <div className="bg-white rounded-xl border border-indigo-200 p-6">
           <h2 className="font-semibold text-gray-900 mb-4">Check In</h2>
           <form onSubmit={submitCheckIn} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-              <input
-                value={checkedInBy}
-                onChange={(e) => setCheckedInBy(e.target.value)}
-                placeholder="Optional"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
-              />
-            </div>
             {objective.keyResults.map((kr) => (
               <div key={kr.id} className="border border-gray-100 rounded-lg p-4">
                 <p className="font-medium text-gray-800 text-sm mb-3">{kr.title}</p>
@@ -559,9 +548,6 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                           <span className="text-gray-600">
                             Confidence: <span className="font-medium text-gray-900">{ci.confidence}%</span>
                           </span>
-                          {ci.checkedInBy && (
-                            <span className="text-gray-400">by {ci.checkedInBy}</span>
-                          )}
                           {ci.notes && (
                             <span className="text-gray-500 italic truncate">{ci.notes}</span>
                           )}
