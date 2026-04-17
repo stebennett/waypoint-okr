@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth, requireRole } from "@/lib/auth/rbac"
 import { withErrorHandling } from "@/lib/http"
+import { recordChange } from "@/lib/audit"
 
 export const GET = withErrorHandling(async (_: Request, { params }: { params: Promise<{ id: string }> }) => {
   await requireAuth()
@@ -34,7 +35,7 @@ export const GET = withErrorHandling(async (_: Request, { params }: { params: Pr
 })
 
 export const PUT = withErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
-  await requireRole("okr_manager")
+  const session = await requireRole("okr_manager")
   const { id } = await params
   const body = await request.json()
   const data: Record<string, unknown> = {}
@@ -45,35 +46,58 @@ export const PUT = withErrorHandling(async (request: Request, { params }: { para
   if (body.parentId !== undefined) data.parentId = body.parentId || null
   if (body.status !== undefined) data.status = body.status
 
-  // Handle tag updates
-  if (body.tagIds !== undefined) {
-    await prisma.objectiveTag.deleteMany({ where: { objectiveId: id } })
-    if (body.tagIds.length > 0) {
-      await prisma.objectiveTag.createMany({
-        data: body.tagIds.map((tagId: string) => ({ objectiveId: id, tagId })),
-      })
-    }
-  }
+  const objective = await prisma.$transaction(async (tx) => {
+    const before = await tx.objective.findUniqueOrThrow({ where: { id } })
 
-  const objective = await prisma.objective.update({
-    where: { id },
-    data,
-    include: {
-      team: true,
-      quarter: true,
-      tags: { include: { tag: true } },
-      parent: { select: { id: true, title: true } },
-      keyResults: {
-        include: { checkIns: { orderBy: { createdAt: "desc" }, take: 1 } },
+    // Handle tag updates
+    if (body.tagIds !== undefined) {
+      await tx.objectiveTag.deleteMany({ where: { objectiveId: id } })
+      if (body.tagIds.length > 0) {
+        await tx.objectiveTag.createMany({
+          data: body.tagIds.map((tagId: string) => ({ objectiveId: id, tagId })),
+        })
+      }
+    }
+
+    const after = await tx.objective.update({
+      where: { id },
+      data,
+      include: {
+        team: true,
+        quarter: true,
+        tags: { include: { tag: true } },
+        parent: { select: { id: true, title: true } },
+        keyResults: {
+          include: { checkIns: { orderBy: { createdAt: "desc" }, take: 1 } },
+        },
       },
-    },
+    })
+    await recordChange(tx, {
+      entityType: "Objective",
+      entityId: id,
+      userId: session.user.id,
+      action: "update",
+      before: before as unknown as Record<string, unknown>,
+      after: after as unknown as Record<string, unknown>,
+    })
+    return after
   })
   return NextResponse.json(objective)
 })
 
 export const DELETE = withErrorHandling(async (_: Request, { params }: { params: Promise<{ id: string }> }) => {
-  await requireRole("okr_manager")
+  const session = await requireRole("okr_manager")
   const { id } = await params
-  await prisma.objective.delete({ where: { id } })
+  await prisma.$transaction(async (tx) => {
+    const before = await tx.objective.findUniqueOrThrow({ where: { id } })
+    await tx.objective.delete({ where: { id } })
+    await recordChange(tx, {
+      entityType: "Objective",
+      entityId: id,
+      userId: session.user.id,
+      action: "delete",
+      before: before as unknown as Record<string, unknown>,
+    })
+  })
   return NextResponse.json({ success: true })
 })

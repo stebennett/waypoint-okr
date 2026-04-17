@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth, requireRole } from "@/lib/auth/rbac"
 import { withErrorHandling } from "@/lib/http"
+import { recordChange } from "@/lib/audit"
 
 export const GET = withErrorHandling(async (request: Request) => {
   await requireAuth()
@@ -50,26 +51,36 @@ export const POST = withErrorHandling(async (request: Request) => {
     return NextResponse.json({ error: "Team is required for team-level objectives" }, { status: 400 })
   }
 
-  const objective = await prisma.objective.create({
-    data: {
-      title: body.title.trim(),
-      description: body.description?.trim() || null,
-      level: body.level || "team",
-      quarterId: body.quarterId,
-      teamId: body.teamId || null,
-      parentId: body.parentId || null,
-      createdById: session.user.id,
-      tags: body.tagIds?.length
-        ? { create: body.tagIds.map((tagId: string) => ({ tagId })) }
-        : undefined,
-    },
-    include: {
-      team: true,
-      quarter: true,
-      tags: { include: { tag: true } },
-      parent: { select: { id: true, title: true } },
-      keyResults: true,
-    },
+  const objective = await prisma.$transaction(async (tx) => {
+    const obj = await tx.objective.create({
+      data: {
+        title: body.title.trim(),
+        description: body.description?.trim() || null,
+        level: body.level || "team",
+        quarterId: body.quarterId,
+        teamId: body.teamId || null,
+        parentId: body.parentId || null,
+        createdById: session.user.id,
+        tags: body.tagIds?.length
+          ? { create: body.tagIds.map((tagId: string) => ({ tagId })) }
+          : undefined,
+      },
+      include: {
+        team: true,
+        quarter: true,
+        tags: { include: { tag: true } },
+        parent: { select: { id: true, title: true } },
+        keyResults: true,
+      },
+    })
+    await recordChange(tx, {
+      entityType: "Objective",
+      entityId: obj.id,
+      userId: session.user.id,
+      action: "create",
+      after: obj as unknown as Record<string, unknown>,
+    })
+    return obj
   })
   return NextResponse.json(objective, { status: 201 })
 })
