@@ -23,9 +23,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    // Support batch check-ins: { checkIns: [...], checkedInBy: string }
+    // Support batch check-ins: { checkIns: [...] }
     if (body.checkIns && Array.isArray(body.checkIns)) {
-      const checkedInBy = body.checkedInBy?.trim() || null
       const created = await prisma.$transaction(
         body.checkIns.map((ci: { keyResultId: string; progress: number; confidence: number; notes?: string }) =>
           prisma.checkIn.create({
@@ -34,7 +33,6 @@ export async function POST(request: Request) {
               progress: Math.min(100, Math.max(0, Number(ci.progress))),
               confidence: Math.min(100, Math.max(0, Number(ci.confidence))),
               notes: ci.notes?.trim() || null,
-              checkedInBy,
             },
           })
         )
@@ -51,7 +49,6 @@ export async function POST(request: Request) {
         progress: Math.min(100, Math.max(0, Number(body.progress || 0))),
         confidence: Math.min(100, Math.max(0, Number(body.confidence || 0))),
         notes: body.notes?.trim() || null,
-        checkedInBy: body.checkedInBy?.trim() || null,
       },
     })
     return NextResponse.json(checkIn, { status: 201 })
