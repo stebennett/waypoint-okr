@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { ObjectiveDetailClient } from './ObjectiveDetailClient'
+import HistoryPanel from './HistoryPanel'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,5 +39,13 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
 
   const role = (session?.user as { role?: string } | undefined)?.role ?? 'viewer'
 
-  return <ObjectiveDetailClient objective={objective} role={role} />
+  return (
+    <>
+      <ObjectiveDetailClient objective={objective} role={role} />
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold mb-2">History</h2>
+        <HistoryPanel objectiveId={id} />
+      </section>
+    </>
+  )
 }
