@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const objective = await prisma.objective.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         team: true,
         quarter: true,
@@ -34,8 +35,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
     const data: Record<string, unknown> = {}
     if (body.title !== undefined) data.title = body.title.trim()
@@ -47,16 +49,16 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     // Handle tag updates
     if (body.tagIds !== undefined) {
-      await prisma.objectiveTag.deleteMany({ where: { objectiveId: params.id } })
+      await prisma.objectiveTag.deleteMany({ where: { objectiveId: id } })
       if (body.tagIds.length > 0) {
         await prisma.objectiveTag.createMany({
-          data: body.tagIds.map((tagId: string) => ({ objectiveId: params.id, tagId })),
+          data: body.tagIds.map((tagId: string) => ({ objectiveId: id, tagId })),
         })
       }
     }
 
     const objective = await prisma.objective.update({
-      where: { id: params.id },
+      where: { id },
       data,
       include: {
         team: true,
@@ -78,9 +80,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await prisma.objective.delete({ where: { id: params.id } })
+    const { id } = await params
+    await prisma.objective.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     if ((error as { code?: string }).code === 'P2025') {

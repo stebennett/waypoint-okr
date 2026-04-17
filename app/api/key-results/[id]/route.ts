@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
     const data: Record<string, unknown> = {}
     if (body.title !== undefined) data.title = body.title.trim()
@@ -11,7 +12,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (body.closeNote !== undefined) data.closeNote = body.closeNote || null
 
     const keyResult = await prisma.keyResult.update({
-      where: { id: params.id },
+      where: { id },
       data,
       include: {
         checkIns: { orderBy: { createdAt: 'desc' } },
@@ -27,9 +28,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await prisma.keyResult.delete({ where: { id: params.id } })
+    const { id } = await params
+    await prisma.keyResult.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     if ((error as { code?: string }).code === 'P2025') {

@@ -20,7 +20,7 @@ export function Nav() {
         <div className="flex items-center justify-between h-14">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl">🎯</span>
-            <span className="font-bold text-gray-900 text-lg">OKR Manager</span>
+            <span className="font-bold text-gray-900 text-lg">Waypoint</span>
           </Link>
           <div className="flex items-center gap-1">
             {navItems.map((item) => {

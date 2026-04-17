@@ -6,17 +6,18 @@ export const dynamic = 'force-dynamic'
 export default async function CheckInPage({
   searchParams,
 }: {
-  searchParams: { quarterId?: string; teamId?: string }
+  searchParams: Promise<{ quarterId?: string; teamId?: string }>
 }) {
+  const sp = await searchParams
   const quarters = await prisma.quarter.findMany({ orderBy: { startDate: 'desc' } })
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } })
 
   const activeQuarter =
-    quarters.find((q) => q.id === searchParams.quarterId) ||
+    quarters.find((q) => q.id === sp.quarterId) ||
     quarters.find((q) => q.status === 'active') ||
     quarters[0]
 
-  const activeTeam = teams.find((t) => t.id === searchParams.teamId) ?? null
+  const activeTeam = teams.find((t) => t.id === sp.teamId) ?? null
 
   const objectives =
     activeQuarter && activeTeam

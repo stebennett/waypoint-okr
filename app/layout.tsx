@@ -6,7 +6,7 @@ import { Nav } from './components/Nav'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'OKR Manager',
+  title: 'Waypoint',
   description: 'Manage your Objectives and Key Results',
 }
 

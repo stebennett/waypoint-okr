@@ -8,21 +8,23 @@ export default async function TeamDetailPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
-  searchParams: { quarterId?: string }
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ quarterId?: string }>
 }) {
-  const team = await prisma.team.findUnique({ where: { id: params.id } })
+  const { id } = await params
+  const sp = await searchParams
+  const team = await prisma.team.findUnique({ where: { id } })
   if (!team) notFound()
 
   const quarters = await prisma.quarter.findMany({ orderBy: { startDate: 'desc' } })
   const activeQuarter =
-    quarters.find((q) => q.id === searchParams.quarterId) ||
+    quarters.find((q) => q.id === sp.quarterId) ||
     quarters.find((q) => q.status === 'active') ||
     quarters[0]
 
   const objectives = activeQuarter
     ? await prisma.objective.findMany({
-        where: { teamId: params.id, quarterId: activeQuarter.id },
+        where: { teamId: id, quarterId: activeQuarter.id },
         include: {
           tags: { include: { tag: true } },
           keyResults: {

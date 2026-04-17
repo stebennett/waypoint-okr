@@ -4,9 +4,10 @@ import { ObjectiveDetailClient } from './ObjectiveDetailClient'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ObjectiveDetailPage({ params }: { params: { id: string } }) {
+export default async function ObjectiveDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const objective = await prisma.objective.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       team: true,
       quarter: true,
