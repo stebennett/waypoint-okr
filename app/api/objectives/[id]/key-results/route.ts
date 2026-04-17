@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth, requireRole } from "@/lib/auth/rbac"
 import { withErrorHandling } from "@/lib/http"
+import { recordChange } from "@/lib/audit"
 
 export const GET = withErrorHandling(async (_: Request, { params }: { params: Promise<{ id: string }> }) => {
   await requireAuth()
@@ -24,16 +25,26 @@ export const POST = withErrorHandling(async (request: Request, { params }: { par
     return NextResponse.json({ error: "Key result title is required" }, { status: 400 })
   }
 
-  const keyResult = await prisma.keyResult.create({
-    data: {
-      title: body.title.trim(),
-      description: body.description?.trim() || null,
-      objectiveId: id,
-      createdById: session.user.id,
-    },
-    include: {
-      checkIns: { orderBy: { createdAt: "desc" } },
-    },
+  const keyResult = await prisma.$transaction(async (tx) => {
+    const newKr = await tx.keyResult.create({
+      data: {
+        title: body.title.trim(),
+        description: body.description?.trim() || null,
+        objectiveId: id,
+        createdById: session.user.id,
+      },
+      include: {
+        checkIns: { orderBy: { createdAt: "desc" } },
+      },
+    })
+    await recordChange(tx, {
+      entityType: "KeyResult",
+      entityId: newKr.id,
+      userId: session.user.id,
+      action: "create",
+      after: newKr as unknown as Record<string, unknown>,
+    })
+    return newKr
   })
   return NextResponse.json(keyResult, { status: 201 })
 })
