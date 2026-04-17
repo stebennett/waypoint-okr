@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { getSession } from '@/lib/auth/session'
 import { DashboardClient } from './DashboardClient'
 
 export const dynamic = 'force-dynamic'
@@ -10,11 +11,16 @@ export default async function DashboardPage({
   searchParams: Promise<{ quarterId?: string }>
 }) {
   const sp = await searchParams
-  const quarters = await prisma.quarter.findMany({ orderBy: { startDate: 'desc' } })
+  const [quarters, session] = await Promise.all([
+    prisma.quarter.findMany({ orderBy: { startDate: 'desc' } }),
+    getSession(),
+  ])
   const activeQuarter =
     quarters.find((q) => q.id === sp.quarterId) ||
     quarters.find((q) => q.status === 'active') ||
     quarters[0]
+
+  const role = (session?.user as { role?: string } | undefined)?.role ?? 'viewer'
 
   if (!activeQuarter) {
     return (
@@ -61,6 +67,7 @@ export default async function DashboardPage({
       quarters={quarters}
       activeQuarter={activeQuarter}
       objectives={objectives}
+      role={role}
     />
   )
 }

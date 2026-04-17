@@ -17,12 +17,20 @@ interface Tag {
   _count: { objectives: number }
 }
 
-export function TagsClient({ initialTags }: { initialTags: Tag[] }) {
+export function TagsClient({
+  initialTags,
+  role,
+}: {
+  initialTags: Tag[]
+  role: string
+}) {
   const [tags, setTags] = useState(initialTags)
   const [form, setForm] = useState({ name: '', color: '#6366f1' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const isAdmin = role === 'admin'
 
   async function createTag(e: React.FormEvent) {
     e.preventDefault()
@@ -69,73 +77,75 @@ export function TagsClient({ initialTags }: { initialTags: Tag[] }) {
         <p className="text-gray-500 text-sm mt-1">Categorise objectives with tags</p>
       </div>
 
-      {/* Create form */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Create Tag</h2>
-        <form onSubmit={createTag} className="space-y-4">
-          <div className="flex gap-3">
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Tag name"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-              required
-            />
-            <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3">
-              <div
-                className="w-4 h-4 rounded-full shrink-0"
-                style={{ backgroundColor: form.color }}
-              />
+      {/* Create form — admin only */}
+      {isAdmin && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="font-semibold text-gray-900 mb-4">Create Tag</h2>
+          <form onSubmit={createTag} className="space-y-4">
+            <div className="flex gap-3">
               <input
-                type="color"
-                value={form.color}
-                onChange={(e) => setForm({ ...form, color: e.target.value })}
-                className="w-8 h-8 cursor-pointer border-none bg-transparent"
-                title="Pick color"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Tag name"
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                required
               />
-            </div>
-          </div>
-
-          {/* Preset colors */}
-          <div>
-            <p className="text-xs text-gray-500 mb-2">Quick colors:</p>
-            <div className="flex flex-wrap gap-2">
-              {PRESET_COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setForm({ ...form, color })}
-                  className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
-                    form.color === color ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : ''
-                  }`}
-                  style={{ backgroundColor: color }}
-                  title={color}
+              <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3">
+                <div
+                  className="w-4 h-4 rounded-full shrink-0"
+                  style={{ backgroundColor: form.color }}
                 />
-              ))}
+                <input
+                  type="color"
+                  value={form.color}
+                  onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  className="w-8 h-8 cursor-pointer border-none bg-transparent"
+                  title="Pick color"
+                />
+              </div>
             </div>
-          </div>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+            {/* Preset colors */}
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Quick colors:</p>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setForm({ ...form, color })}
+                    className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
+                      form.color === color ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : ''
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+              </div>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            >
-              {loading ? 'Creating…' : 'Create Tag'}
-            </button>
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white"
-                style={{ backgroundColor: form.color }}
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                {form.name || 'Preview'}
-              </span>
+                {loading ? 'Creating…' : 'Create Tag'}
+              </button>
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white"
+                  style={{ backgroundColor: form.color }}
+                >
+                  {form.name || 'Preview'}
+                </span>
+              </div>
             </div>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
 
       {/* Tags list */}
       <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
@@ -164,12 +174,14 @@ export function TagsClient({ initialTags }: { initialTags: Tag[] }) {
                     View objectives →
                   </Link>
                 )}
-                <button
-                  onClick={() => deleteTag(tag.id, tag.name)}
-                  className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                >
-                  Delete
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => deleteTag(tag.id, tag.name)}
+                    className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))

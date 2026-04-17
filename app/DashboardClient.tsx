@@ -62,10 +62,12 @@ interface DashboardClientProps {
   quarters: Quarter[]
   activeQuarter: Quarter
   objectives: Objective[]
+  role: string
 }
 
-export function DashboardClient({ quarters, activeQuarter, objectives }: DashboardClientProps) {
+export function DashboardClient({ quarters, activeQuarter, objectives, role }: DashboardClientProps) {
   const router = useRouter()
+  const canMutate = role === 'okr_manager' || role === 'admin'
 
   const companyObjectives = objectives.filter((o) => o.level === 'company')
   const teamObjectives = objectives.filter((o) => o.level === 'team')
@@ -105,12 +107,14 @@ export function DashboardClient({ quarters, activeQuarter, objectives }: Dashboa
           >
             ✓ Weekly Check-in
           </Link>
-          <Link
-            href="/objectives/new"
-            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
-          >
-            + New Objective
-          </Link>
+          {canMutate && (
+            <Link
+              href="/objectives/new"
+              className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
+            >
+              + New Objective
+            </Link>
+          )}
         </div>
       </div>
 
@@ -244,12 +248,14 @@ export function DashboardClient({ quarters, activeQuarter, objectives }: Dashboa
       {objectives.length === 0 && (
         <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl">
           <p className="text-gray-400 mb-3">No objectives yet for {activeQuarter.name}</p>
-          <Link
-            href="/objectives/new"
-            className="text-indigo-600 font-medium hover:text-indigo-700 text-sm"
-          >
-            + Add the first objective
-          </Link>
+          {canMutate && (
+            <Link
+              href="/objectives/new"
+              className="text-indigo-600 font-medium hover:text-indigo-700 text-sm"
+            >
+              + Add the first objective
+            </Link>
+          )}
         </div>
       )}
     </div>

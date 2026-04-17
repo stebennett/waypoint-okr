@@ -51,7 +51,7 @@ interface Objective {
   closedAt?: string | Date | null
 }
 
-export function ObjectiveDetailClient({ objective: initial }: { objective: Objective }) {
+export function ObjectiveDetailClient({ objective: initial, role }: { objective: Objective; role: string }) {
   const [objective, setObjective] = useState(initial)
   const [showAddKR, setShowAddKR] = useState(false)
   const [newKRTitle, setNewKRTitle] = useState('')
@@ -83,6 +83,8 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
   })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const canMutate = role === 'okr_manager' || role === 'admin'
 
   async function addKR(e: React.FormEvent) {
     e.preventDefault()
@@ -275,8 +277,8 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
           </div>
         )}
 
-        {/* Actions */}
-        {objective.status === 'active' && (
+        {/* Actions — okr_manager and admin only */}
+        {objective.status === 'active' && canMutate && (
           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
             <button
               onClick={() => setShowCheckIn(!showCheckIn)}
@@ -512,7 +514,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                         Final: {kr.finalScore}%
                       </span>
                     )}
-                    {objective.status === 'active' && (
+                    {objective.status === 'active' && canMutate && (
                       <button
                         onClick={() => deleteKR(kr.id)}
                         className="text-xs text-red-400 hover:text-red-600"

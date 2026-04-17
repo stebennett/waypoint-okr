@@ -55,8 +55,10 @@ export function CheckInClient({
   objectives,
   activeQuarter,
   activeTeam,
-}: CheckInClientProps) {
+  role,
+}: CheckInClientProps & { role: string }) {
   const router = useRouter()
+  const canMutate = role === 'okr_manager' || role === 'admin'
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -229,9 +231,11 @@ export function CheckInClient({
           <p className="text-gray-400 mb-2">
             No active objectives for {activeTeam.name} in {activeQuarter.name}
           </p>
-          <Link href="/objectives/new" className="text-indigo-600 text-sm font-medium hover:text-indigo-700">
-            + Add objectives
-          </Link>
+          {canMutate && (
+            <Link href="/objectives/new" className="text-indigo-600 text-sm font-medium hover:text-indigo-700">
+              + Add objectives
+            </Link>
+          )}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">

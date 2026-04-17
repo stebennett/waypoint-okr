@@ -48,10 +48,12 @@ interface TeamDetailClientProps {
   quarters: Quarter[]
   activeQuarter: Quarter | null
   objectives: Objective[]
+  role: string
 }
 
-export function TeamDetailClient({ team, quarters, activeQuarter, objectives }: TeamDetailClientProps) {
+export function TeamDetailClient({ team, quarters, activeQuarter, objectives, role }: TeamDetailClientProps) {
   const router = useRouter()
+  const canMutate = role === 'okr_manager' || role === 'admin'
 
   return (
     <div className="space-y-8">
@@ -80,12 +82,14 @@ export function TeamDetailClient({ team, quarters, activeQuarter, objectives }: 
               ))}
             </select>
           )}
-          <Link
-            href={`/objectives/new?teamId=${team.id}`}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-          >
-            + New Objective
-          </Link>
+          {canMutate && (
+            <Link
+              href={`/objectives/new?teamId=${team.id}`}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+            >
+              + New Objective
+            </Link>
+          )}
           <Link
             href={`/check-in?teamId=${team.id}`}
             className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
@@ -102,12 +106,14 @@ export function TeamDetailClient({ team, quarters, activeQuarter, objectives }: 
       ) : objectives.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl">
           <p className="text-gray-400 mb-3">No objectives for {activeQuarter.name}</p>
-          <Link
-            href={`/objectives/new?teamId=${team.id}`}
-            className="text-indigo-600 font-medium hover:text-indigo-700 text-sm"
-          >
-            + Add the first objective
-          </Link>
+          {canMutate && (
+            <Link
+              href={`/objectives/new?teamId=${team.id}`}
+              className="text-indigo-600 font-medium hover:text-indigo-700 text-sm"
+            >
+              + Add the first objective
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
