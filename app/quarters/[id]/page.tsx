@@ -10,18 +10,20 @@ export default async function QuarterDetailPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
-  searchParams: { teamId?: string; tagId?: string }
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ teamId?: string; tagId?: string }>
 }) {
-  const quarter = await prisma.quarter.findUnique({ where: { id: params.id } })
+  const { id } = await params
+  const sp = await searchParams
+  const quarter = await prisma.quarter.findUnique({ where: { id } })
   if (!quarter) notFound()
 
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } })
   const tags = await prisma.tag.findMany({ orderBy: { name: 'asc' } })
 
-  const where: Record<string, unknown> = { quarterId: params.id }
-  if (searchParams.teamId) where.teamId = searchParams.teamId
-  if (searchParams.tagId) where.tags = { some: { tagId: searchParams.tagId } }
+  const where: Record<string, unknown> = { quarterId: id }
+  if (sp.teamId) where.teamId = sp.teamId
+  if (sp.tagId) where.tags = { some: { tagId: sp.tagId } }
 
   const objectives = await prisma.objective.findMany({
     where,
@@ -41,8 +43,8 @@ export default async function QuarterDetailPage({
       objectives={objectives}
       teams={teams}
       tags={tags}
-      selectedTeamId={searchParams.teamId ?? null}
-      selectedTagId={searchParams.tagId ?? null}
+      selectedTeamId={sp.teamId ?? null}
+      selectedTagId={sp.tagId ?? null}
     />
   )
 }

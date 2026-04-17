@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const quarter = await prisma.quarter.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         objectives: {
           include: {
@@ -35,8 +36,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
     const data: Record<string, unknown> = {}
     if (body.name !== undefined) data.name = body.name.trim()
@@ -45,7 +47,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (body.status !== undefined) data.status = body.status
 
     const quarter = await prisma.quarter.update({
-      where: { id: params.id },
+      where: { id },
       data,
     })
     return NextResponse.json(quarter)

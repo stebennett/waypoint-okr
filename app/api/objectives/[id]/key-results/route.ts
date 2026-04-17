@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const keyResults = await prisma.keyResult.findMany({
-      where: { objectiveId: params.id },
+      where: { objectiveId: id },
       include: {
         checkIns: { orderBy: { createdAt: 'desc' } },
       },
@@ -17,8 +18,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
     if (!body.title?.trim()) {
       return NextResponse.json({ error: 'Key result title is required' }, { status: 400 })
@@ -28,7 +30,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       data: {
         title: body.title.trim(),
         description: body.description?.trim() || null,
-        objectiveId: params.id,
+        objectiveId: id,
       },
       include: {
         checkIns: { orderBy: { createdAt: 'desc' } },

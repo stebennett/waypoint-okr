@@ -1,4 +1,4 @@
-# 🎯 OKR Manager
+# 🎯 Waypoint
 
 A full-stack OKR (Objectives and Key Results) management application built with Next.js 14, Prisma, and SQLite.
 

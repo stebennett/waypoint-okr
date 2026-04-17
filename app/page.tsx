@@ -7,11 +7,12 @@ export const dynamic = 'force-dynamic'
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { quarterId?: string }
+  searchParams: Promise<{ quarterId?: string }>
 }) {
+  const sp = await searchParams
   const quarters = await prisma.quarter.findMany({ orderBy: { startDate: 'desc' } })
   const activeQuarter =
-    quarters.find((q) => q.id === searchParams.quarterId) ||
+    quarters.find((q) => q.id === sp.quarterId) ||
     quarters.find((q) => q.status === 'active') ||
     quarters[0]
 
@@ -19,7 +20,7 @@ export default async function DashboardPage({
     return (
       <div className="text-center py-20">
         <div className="text-6xl mb-4">🎯</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to OKR Manager</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Waypoint</h2>
         <p className="text-gray-500 mb-6">Get started by creating a quarter and adding your objectives.</p>
         <div className="flex gap-3 justify-center">
           <Link
