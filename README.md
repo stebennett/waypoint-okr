@@ -44,11 +44,21 @@ Open [http://localhost:3000](http://localhost:3000).
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | Prisma database URL | `file:./dev.db` |
+| `AUTH_SECRET` | Random 32+ byte secret. Generate: `openssl rand -hex 32` | _(required)_ |
+| `AUTH_URL` | Base URL (e.g. `https://waypoint.example.com`) | _(required in prod)_ |
+| `ADMIN_EMAIL` | First-boot admin email | _(required on first start)_ |
+| `ADMIN_INITIAL_PASSWORD` | First-boot admin password (CHANGE ON FIRST LOGIN) | _(required on first start)_ |
+| `SLACK_CLIENT_ID` | Optional Slack OAuth app client ID | _(optional)_ |
+| `SLACK_CLIENT_SECRET` | Optional Slack OAuth app client secret | _(optional)_ |
 
 Create a `.env` file in the project root:
 
 ```env
 DATABASE_URL="file:./dev.db"
+AUTH_SECRET="your-secret-here"
+AUTH_URL="http://localhost:3000"
+ADMIN_EMAIL="admin@example.com"
+ADMIN_INITIAL_PASSWORD="changeme"
 ```
 
 ---
@@ -143,6 +153,40 @@ okr-app/
 ├── next.config.ts
 └── tailwind.config.ts
 ```
+
+---
+
+## 🔐 Authentication & Roles
+
+Waypoint requires login. Three roles:
+
+| Role | Capabilities |
+|---|---|
+| `viewer` | Read dashboards, objectives, history |
+| `okr_manager` | Create/edit/delete objectives and key results, check in |
+| `admin` | Manage users, quarters, teams, tags (at `/admin`) |
+
+### First boot
+
+Set `ADMIN_EMAIL` and `ADMIN_INITIAL_PASSWORD` on first container start — Waypoint will create the first admin user. **Change this password on first login** (via `/account`).
+
+Required env vars:
+
+| Variable | Description |
+|---|---|
+| `AUTH_SECRET` | Random 32+ byte secret. Generate: `openssl rand -hex 32` |
+| `AUTH_URL` | Base URL (e.g. `https://waypoint.example.com`) |
+| `ADMIN_EMAIL` | First-boot admin email |
+| `ADMIN_INITIAL_PASSWORD` | First-boot admin password (CHANGE ON FIRST LOGIN) |
+| `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | Optional. When both are set, a "Continue with Slack" button appears. Login is only permitted for users that already exist (invite-only). |
+
+### Managing users
+
+Navigate to `/admin` (admins only; not linked in the UI). From there you can create users, change roles, reset passwords, and delete accounts. At least one admin must always exist; admins cannot delete or demote themselves.
+
+### Audit history
+
+Every objective and key result change is recorded. Open an objective detail page to see its change history.
 
 ---
 
