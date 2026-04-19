@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { progressColor, progressTextColor, progressBgLight } from '@/lib/utils'
 
 interface Quarter {
@@ -229,9 +230,9 @@ export function CheckInClient({
           <p className="text-gray-400 mb-2">
             No active objectives for {activeTeam.name} in {activeQuarter.name}
           </p>
-          <a href="/objectives/new" className="text-indigo-600 text-sm font-medium hover:text-indigo-700">
+          <Link href="/objectives/new" className="text-indigo-600 text-sm font-medium hover:text-indigo-700">
             + Add objectives
-          </a>
+          </Link>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">

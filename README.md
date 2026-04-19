@@ -105,54 +105,6 @@ docker run -d \
 
 ---
 
-## ☁️ Cloudflare Pages Deployment
-
-> ⚠️ **Important Limitation:** SQLite does not work on Cloudflare Pages (no persistent filesystem). The GitHub Actions workflow deploys the static/edge frontend, but **API routes that require the database will not function** on Cloudflare Pages.
-
-### What works on Cloudflare Pages
-
-- Static page rendering (if you pre-render pages)
-- Edge middleware
-- UI preview deployments
-
-### What doesn't work
-
-- All `/api/*` routes (require SQLite)
-- Any dynamic data fetching
-
-### Recommended approach for production
-
-**Use the Docker image** (see above) for a fully functional deployment with the database.
-
-### Future: Cloudflare D1
-
-To make this app fully Cloudflare-native, you would need to:
-
-1. Replace Prisma + SQLite with [Prisma + Cloudflare D1](https://www.prisma.io/docs/orm/overview/databases/cloudflare-d1) or [Drizzle ORM](https://orm.drizzle.team/docs/get-started-sqlite#cloudflare-d1)
-2. Bind your D1 database in `wrangler.toml`
-3. Update API routes to use the D1 binding from the Cloudflare worker context
-
-This is left as future work.
-
-### GitHub Actions Setup
-
-1. Add these secrets to your GitHub repository (Settings → Secrets → Actions):
-   - `CLOUDFLARE_API_TOKEN` — A Cloudflare API token with Pages edit permissions
-   - `CLOUDFLARE_ACCOUNT_ID` — Your Cloudflare account ID
-
-2. Create the Cloudflare Pages project named `okr-app` in your Cloudflare dashboard (or let the action create it on first deploy).
-
-3. Push to `main` — the workflow will build and deploy automatically.
-
-The workflow:
-- Runs on push to `main`
-- Installs dependencies
-- Generates Prisma client
-- Builds with `@cloudflare/next-on-pages`
-- Deploys `.vercel/output/static` to Cloudflare Pages
-
----
-
 ## 📁 Project Structure
 
 ```
@@ -184,13 +136,12 @@ okr-app/
 │   ├── migrations/
 │   └── schema.prisma           # Database schema
 ├── .github/workflows/
-│   └── deploy.yml              # Cloudflare Pages CI/CD
+│   └── ci.yml                  # Lint, type-check, build on PRs
 ├── docker-compose.yml
 ├── Dockerfile
 ├── docker-entrypoint.sh
 ├── next.config.ts
-├── tailwind.config.ts
-└── wrangler.toml
+└── tailwind.config.ts
 ```
 
 ---
@@ -224,4 +175,4 @@ okr-app/
 - **Database:** SQLite (via Prisma ORM)
 - **Runtime:** Node.js 20
 - **Containerisation:** Docker + Docker Compose
-- **CI/CD:** GitHub Actions → Cloudflare Pages
+- **CI:** GitHub Actions (lint, type-check, build on PRs)
