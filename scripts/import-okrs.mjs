@@ -56,7 +56,6 @@ async function main() {
   const idx = (name) => header.indexOf(name)
   const iKr = idx("KeyResult")
   const iObj = idx("ObjectiveName")
-  const iPeriod = idx("PeriodName")
   const iSquad = idx("SquadName")
 
   const prisma = new PrismaClient()
