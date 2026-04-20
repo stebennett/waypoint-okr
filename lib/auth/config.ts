@@ -48,7 +48,7 @@ if (process.env.SLACK_CLIENT_ID && process.env.SLACK_CLIENT_SECRET) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "database" },
+  session: { strategy: "jwt" },
   providers,
   pages: { signIn: "/login" },
   callbacks: {
@@ -63,11 +63,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true
     },
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = (user as { id?: string }).id ?? token.sub
+        token.role = (user as { role?: string }).role ?? "viewer"
+      } else if (token.sub && !token.role) {
+        // Slack/OAuth sign-ins don't pass role through `user`; hydrate from DB.
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { id: true, role: true },
+        })
+        if (dbUser) {
+          token.id = dbUser.id
+          token.role = dbUser.role
+        }
+      }
+      return token
+    },
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = user.id
+        session.user.id = (token.id as string) ?? token.sub ?? session.user.id
         ;(session.user as { role?: string }).role =
-          (user as { role?: string }).role ?? "viewer"
+          (token.role as string | undefined) ?? "viewer"
       }
       return session
     },
