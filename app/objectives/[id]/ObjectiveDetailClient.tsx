@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ProgressBar } from '@/app/components/ProgressBar'
+import { ProgressConfidenceChart } from '@/app/components/ProgressConfidenceChart'
 import { TagBadge } from '@/app/components/TagBadge'
 import { formatDate } from '@/lib/utils'
 
@@ -195,6 +196,25 @@ export function ObjectiveDetailClient({ objective: initial, role }: { objective:
         )
       : 0
 
+  const objectiveChartPoints = (() => {
+    const byDate = new Map<string, { progress: number[]; confidence: number[]; date: Date }>()
+    for (const kr of objective.keyResults) {
+      for (const ci of kr.checkIns) {
+        const d = new Date(ci.createdAt)
+        const key = d.toISOString().slice(0, 10)
+        const entry = byDate.get(key) ?? { progress: [], confidence: [], date: d }
+        entry.progress.push(ci.progress)
+        entry.confidence.push(ci.confidence)
+        byDate.set(key, entry)
+      }
+    }
+    return Array.from(byDate.values()).map((e) => ({
+      date: e.date,
+      progress: Math.round(e.progress.reduce((s, v) => s + v, 0) / e.progress.length),
+      confidence: Math.round(e.confidence.reduce((s, v) => s + v, 0) / e.confidence.length),
+    }))
+  })()
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Breadcrumb */}
@@ -264,6 +284,13 @@ export function ObjectiveDetailClient({ objective: initial, role }: { objective:
         {objective.keyResults.length > 0 && (
           <div className="mb-4">
             <ProgressBar value={avgProgress} label="Overall Progress" />
+          </div>
+        )}
+
+        {/* Objective-level progress/confidence chart */}
+        {objectiveChartPoints.length > 0 && (
+          <div className="mb-4">
+            <ProgressConfidenceChart points={objectiveChartPoints} />
           </div>
         )}
 
@@ -534,13 +561,27 @@ export function ObjectiveDetailClient({ objective: initial, role }: { objective:
                   <p className="text-xs text-gray-400 mb-4 italic">No check-ins yet</p>
                 )}
 
-                {/* Check-in history */}
+                {/* Per-KR progress/confidence chart */}
                 {kr.checkIns.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
-                      History
-                    </p>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="mb-4">
+                    <ProgressConfidenceChart
+                      points={kr.checkIns.map((ci) => ({
+                        date: ci.createdAt,
+                        progress: ci.progress,
+                        confidence: ci.confidence,
+                      }))}
+                    />
+                  </div>
+                )}
+
+                {/* Check-in history (collapsed by default) */}
+                {kr.checkIns.length > 0 && (
+                  <details className="group">
+                    <summary className="cursor-pointer text-xs font-medium text-gray-400 uppercase tracking-wide select-none list-none flex items-center gap-1.5">
+                      <span className="inline-block transition-transform group-open:rotate-90">▸</span>
+                      History ({kr.checkIns.length})
+                    </summary>
+                    <div className="space-y-2 max-h-48 overflow-y-auto mt-2">
                       {kr.checkIns.map((ci) => (
                         <div key={ci.id} className="flex items-center gap-3 text-xs py-1.5 border-t border-gray-50">
                           <span className="text-gray-400 shrink-0 w-24">{formatDate(ci.createdAt)}</span>
@@ -556,7 +597,7 @@ export function ObjectiveDetailClient({ objective: initial, role }: { objective:
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </details>
                 )}
               </div>
             )
