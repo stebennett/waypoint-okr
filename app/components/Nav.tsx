@@ -2,17 +2,21 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { hasRole, type Role } from '@/lib/auth/rbac'
 
-const navItems = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/teams', label: 'Teams' },
-  { href: '/quarters', label: 'Quarters' },
-  { href: '/tags', label: 'Tags' },
-  { href: '/check-in', label: '✓ Check-in' },
+type NavItem = { href: string; label: string; minRole: Role }
+
+const navItems: NavItem[] = [
+  { href: '/', label: 'Dashboard', minRole: 'viewer' },
+  { href: '/teams', label: 'Teams', minRole: 'admin' },
+  { href: '/quarters', label: 'Quarters', minRole: 'admin' },
+  { href: '/tags', label: 'Tags', minRole: 'admin' },
+  { href: '/check-in', label: '✓ Check-in', minRole: 'okr_manager' },
 ]
 
-export function Nav() {
+export function Nav({ role }: { role?: Role }) {
   const pathname = usePathname()
+  const visibleItems = navItems.filter((item) => hasRole(role, item.minRole))
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -23,7 +27,7 @@ export function Nav() {
             <span className="font-bold text-gray-900 text-lg">Waypoint</span>
           </Link>
           <div className="flex items-center gap-1">
-            {navItems.map((item) => {
+            {visibleItems.map((item) => {
               const isActive =
                 item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
               return (
