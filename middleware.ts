@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth/config"
+import { hasRole, type Role } from "@/lib/auth/rbac"
 
 const PUBLIC_PATHS = ["/login", "/api/auth", "/api/health"]
+
+const ROLE_GATED_PREFIXES: { prefix: string; minRole: Role }[] = [
+  { prefix: "/admin", minRole: "admin" },
+  { prefix: "/teams", minRole: "admin" },
+  { prefix: "/quarters", minRole: "admin" },
+  { prefix: "/tags", minRole: "admin" },
+  { prefix: "/check-in", minRole: "okr_manager" },
+]
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
@@ -14,9 +23,13 @@ export default auth((req) => {
     url.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(url)
   }
-  if (pathname.startsWith("/admin")) {
-    if ((req.auth.user as { role?: string }).role !== "admin") {
-      return NextResponse.redirect(new URL("/", req.url))
+  const role = (req.auth.user as { role?: Role }).role
+  for (const { prefix, minRole } of ROLE_GATED_PREFIXES) {
+    if (pathname === prefix || pathname.startsWith(prefix + "/")) {
+      if (!hasRole(role, minRole)) {
+        return NextResponse.redirect(new URL("/", req.url))
+      }
+      break
     }
   }
   return NextResponse.next()
