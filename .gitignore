@@ -1,9 +1,9 @@
 node_modules/
 .next/
+next-env.d.ts
 *.db
 *.db-journal
 .env
 .env.local
-.vercel/
 tsconfig.tsbuildinfo
 data/
