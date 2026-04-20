@@ -23,19 +23,26 @@ export default async function DashboardPage({
   const role = (session?.user as { role?: string } | undefined)?.role ?? 'viewer'
 
   if (!activeQuarter) {
+    const isAdmin = role === 'admin'
     return (
       <div className="text-center py-20">
         <div className="text-6xl mb-4">🎯</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Waypoint</h2>
-        <p className="text-gray-500 mb-6">Get started by creating a quarter and adding your objectives.</p>
-        <div className="flex gap-3 justify-center">
-          <Link
-            href="/quarters"
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-          >
-            Create a Quarter
-          </Link>
-        </div>
+        <p className="text-gray-500 mb-6">
+          {isAdmin
+            ? 'Get started by creating a quarter and adding your objectives.'
+            : 'No quarters have been set up yet. Please contact an administrator.'}
+        </p>
+        {isAdmin && (
+          <div className="flex gap-3 justify-center">
+            <Link
+              href="/quarters"
+              className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+            >
+              Create a Quarter
+            </Link>
+          </div>
+        )}
       </div>
     )
   }
