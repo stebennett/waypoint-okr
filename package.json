@@ -10,7 +10,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
-    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
+    "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
     "test": "vitest run"
   },
   "dependencies": {
@@ -21,7 +21,6 @@
     "next-auth": "^5.0.0-beta.31",
     "react": "^18",
     "react-dom": "^18",
-    "tsx": "^4.21.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

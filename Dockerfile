@@ -41,11 +41,17 @@ RUN mkdir -p /data && chown nextjs:nodejs /data
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Copy bootstrap-admin script (runs on first boot)
+COPY --from=builder /app/scripts ./scripts
+
 # Copy Prisma files (needed for migrations at runtime)
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+
+# Copy bcryptjs (used by bootstrap-admin and not always traced into standalone)
+COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
 # Copy entrypoint
 COPY docker-entrypoint.sh ./
