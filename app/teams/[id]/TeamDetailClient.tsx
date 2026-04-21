@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ProgressBar } from '@/app/components/ProgressBar'
 import { TagBadge } from '@/app/components/TagBadge'
+import { TrendIndicator } from '@/app/components/TrendIndicator'
+import { trend } from '@/lib/utils'
 
 interface Quarter {
   id: string
@@ -181,20 +183,33 @@ export function TeamDetailClient({ team, quarters, activeQuarter, objectives, ro
                     </p>
                     {activeKRs.map((kr) => {
                       const latest = kr.checkIns[0]
+                      const prev = kr.checkIns[1]
+                      const progressTrend = trend(latest?.progress, prev?.progress)
+                      const confidenceTrend = trend(latest?.confidence, prev?.confidence)
                       return (
-                        <div key={kr.id} className="flex items-center gap-3 py-2 border-t border-gray-50">
+                        <div key={kr.id} className="flex items-center gap-4 py-2 border-t border-gray-50">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-700 truncate">{kr.title}</p>
                           </div>
                           {latest ? (
-                            <div className="flex items-center gap-3 shrink-0">
-                              <div className="text-right">
-                                <p className="text-xs text-gray-400">Progress</p>
-                                <p className="text-sm font-medium text-gray-900">{latest.progress}%</p>
+                            <div className="flex items-center gap-4 shrink-0">
+                              <div className="w-40">
+                                <div className="flex items-center justify-between text-xs text-gray-400 mb-0.5">
+                                  <span className="flex items-center gap-1">
+                                    Progress <TrendIndicator trend={progressTrend} />
+                                  </span>
+                                  <span className="text-gray-700 font-medium">{latest.progress}%</span>
+                                </div>
+                                <ProgressBar value={latest.progress} size="sm" showValue={false} />
                               </div>
-                              <div className="text-right">
-                                <p className="text-xs text-gray-400">Confidence</p>
-                                <p className="text-sm font-medium text-gray-900">{latest.confidence}%</p>
+                              <div className="w-40">
+                                <div className="flex items-center justify-between text-xs text-gray-400 mb-0.5">
+                                  <span className="flex items-center gap-1">
+                                    Confidence <TrendIndicator trend={confidenceTrend} />
+                                  </span>
+                                  <span className="text-gray-700 font-medium">{latest.confidence}%</span>
+                                </div>
+                                <ProgressBar value={latest.confidence} size="sm" showValue={false} />
                               </div>
                             </div>
                           ) : (
