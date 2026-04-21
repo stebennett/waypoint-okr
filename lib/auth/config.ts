@@ -18,15 +18,34 @@ const providers: NextAuthConfig["providers"] = [
       email: { label: "Email", type: "email" },
       password: { label: "Password", type: "password" },
     },
-    async authorize(raw) {
+    async authorize(raw, request) {
+      const ip =
+        request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request?.headers.get("x-real-ip") ||
+        "unknown"
+      const logFail = (reason: string, email?: string) => {
+        console.warn(
+          `[auth] failed login email=${email ?? "-"} ip=${ip} reason=${reason}`
+        )
+      }
+
       const parsed = credentialsSchema.safeParse(raw)
-      if (!parsed.success) return null
+      if (!parsed.success) {
+        logFail("invalid-input", typeof raw?.email === "string" ? raw.email : undefined)
+        return null
+      }
       const user = await prisma.user.findUnique({
         where: { email: parsed.data.email.toLowerCase() },
       })
-      if (!user?.passwordHash) return null
+      if (!user?.passwordHash) {
+        logFail("no-such-user-or-oauth-only", parsed.data.email)
+        return null
+      }
       const ok = await bcrypt.compare(parsed.data.password, user.passwordHash)
-      if (!ok) return null
+      if (!ok) {
+        logFail("bad-password", parsed.data.email)
+        return null
+      }
       return {
         id: user.id,
         email: user.email,
