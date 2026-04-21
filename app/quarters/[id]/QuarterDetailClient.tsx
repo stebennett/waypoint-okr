@@ -59,6 +59,7 @@ interface QuarterDetailClientProps {
   tags: Tag[]
   selectedTeamId: string | null
   selectedTagId: string | null
+  role: string
 }
 
 export function QuarterDetailClient({
@@ -68,8 +69,10 @@ export function QuarterDetailClient({
   tags,
   selectedTeamId,
   selectedTagId,
+  role,
 }: QuarterDetailClientProps) {
   const router = useRouter()
+  const canMutate = role === 'okr_manager' || role === 'admin'
 
   function setFilter(key: string, value: string) {
     const params = new URLSearchParams()
@@ -103,12 +106,14 @@ export function QuarterDetailClient({
               </span>
             </p>
           </div>
-          <Link
-            href={`/objectives/new?quarterId=${quarter.id}`}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-          >
-            + New Objective
-          </Link>
+          {canMutate && (
+            <Link
+              href={`/objectives/new?quarterId=${quarter.id}`}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+            >
+              + New Objective
+            </Link>
+          )}
         </div>
       </div>
 
@@ -164,12 +169,14 @@ export function QuarterDetailClient({
       {objectives.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl">
           <p className="text-gray-400 mb-3">No objectives found</p>
-          <Link
-            href={`/objectives/new?quarterId=${quarter.id}`}
-            className="text-indigo-600 font-medium hover:text-indigo-700 text-sm"
-          >
-            + Add the first objective
-          </Link>
+          {canMutate && (
+            <Link
+              href={`/objectives/new?quarterId=${quarter.id}`}
+              className="text-indigo-600 font-medium hover:text-indigo-700 text-sm"
+            >
+              + Add the first objective
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-4">

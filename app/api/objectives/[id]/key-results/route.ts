@@ -1,44 +1,50 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { requireAuth, requireRole } from "@/lib/auth/rbac"
+import { withErrorHandling } from "@/lib/http"
+import { recordChange } from "@/lib/audit"
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    const keyResults = await prisma.keyResult.findMany({
-      where: { objectiveId: id },
-      include: {
-        checkIns: { orderBy: { createdAt: 'desc' } },
-      },
-      orderBy: { createdAt: 'asc' },
-    })
-    return NextResponse.json(keyResults)
-  } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Failed to fetch key results' }, { status: 500 })
+export const GET = withErrorHandling(async (_: Request, { params }: { params: Promise<{ id: string }> }) => {
+  await requireAuth()
+  const { id } = await params
+  const keyResults = await prisma.keyResult.findMany({
+    where: { objectiveId: id },
+    include: {
+      checkIns: { orderBy: { createdAt: "desc" } },
+    },
+    orderBy: { createdAt: "asc" },
+  })
+  return NextResponse.json(keyResults)
+})
+
+export const POST = withErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
+  const session = await requireRole("okr_manager")
+  const { id } = await params
+  const body = await request.json()
+  if (!body.title?.trim()) {
+    return NextResponse.json({ error: "Key result title is required" }, { status: 400 })
   }
-}
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    const body = await request.json()
-    if (!body.title?.trim()) {
-      return NextResponse.json({ error: 'Key result title is required' }, { status: 400 })
-    }
-
-    const keyResult = await prisma.keyResult.create({
+  const keyResult = await prisma.$transaction(async (tx) => {
+    const newKr = await tx.keyResult.create({
       data: {
         title: body.title.trim(),
         description: body.description?.trim() || null,
         objectiveId: id,
+        createdById: session.user.id,
       },
       include: {
-        checkIns: { orderBy: { createdAt: 'desc' } },
+        checkIns: { orderBy: { createdAt: "desc" } },
       },
     })
-    return NextResponse.json(keyResult, { status: 201 })
-  } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Failed to create key result' }, { status: 500 })
-  }
-}
+    await recordChange(tx, {
+      entityType: "KeyResult",
+      entityId: newKr.id,
+      userId: session.user.id,
+      action: "create",
+      after: newKr as unknown as Record<string, unknown>,
+    })
+    return newKr
+  })
+  return NextResponse.json(keyResult, { status: 201 })
+})

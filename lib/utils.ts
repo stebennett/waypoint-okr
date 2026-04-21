@@ -37,3 +37,13 @@ export function formatDate(date: string | Date): string {
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
+
+export type Trend = 'up' | 'steady' | 'down'
+
+export function trend(latest?: number, prev?: number, threshold = 3): Trend {
+  if (latest == null || prev == null) return 'steady'
+  const d = latest - prev
+  if (d > threshold) return 'up'
+  if (d < -threshold) return 'down'
+  return 'steady'
+}

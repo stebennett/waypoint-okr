@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ProgressBar } from '@/app/components/ProgressBar'
 import { TagBadge } from '@/app/components/TagBadge'
+import { TrendIndicator } from '@/app/components/TrendIndicator'
+import { trend } from '@/lib/utils'
 
 interface Quarter {
   id: string
@@ -48,10 +50,12 @@ interface TeamDetailClientProps {
   quarters: Quarter[]
   activeQuarter: Quarter | null
   objectives: Objective[]
+  role: string
 }
 
-export function TeamDetailClient({ team, quarters, activeQuarter, objectives }: TeamDetailClientProps) {
+export function TeamDetailClient({ team, quarters, activeQuarter, objectives, role }: TeamDetailClientProps) {
   const router = useRouter()
+  const canMutate = role === 'okr_manager' || role === 'admin'
 
   return (
     <div className="space-y-8">
@@ -80,12 +84,14 @@ export function TeamDetailClient({ team, quarters, activeQuarter, objectives }: 
               ))}
             </select>
           )}
-          <Link
-            href={`/objectives/new?teamId=${team.id}`}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-          >
-            + New Objective
-          </Link>
+          {canMutate && (
+            <Link
+              href={`/objectives/new?teamId=${team.id}`}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+            >
+              + New Objective
+            </Link>
+          )}
           <Link
             href={`/check-in?teamId=${team.id}`}
             className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
@@ -102,12 +108,14 @@ export function TeamDetailClient({ team, quarters, activeQuarter, objectives }: 
       ) : objectives.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl">
           <p className="text-gray-400 mb-3">No objectives for {activeQuarter.name}</p>
-          <Link
-            href={`/objectives/new?teamId=${team.id}`}
-            className="text-indigo-600 font-medium hover:text-indigo-700 text-sm"
-          >
-            + Add the first objective
-          </Link>
+          {canMutate && (
+            <Link
+              href={`/objectives/new?teamId=${team.id}`}
+              className="text-indigo-600 font-medium hover:text-indigo-700 text-sm"
+            >
+              + Add the first objective
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
@@ -175,20 +183,33 @@ export function TeamDetailClient({ team, quarters, activeQuarter, objectives }: 
                     </p>
                     {activeKRs.map((kr) => {
                       const latest = kr.checkIns[0]
+                      const prev = kr.checkIns[1]
+                      const progressTrend = trend(latest?.progress, prev?.progress)
+                      const confidenceTrend = trend(latest?.confidence, prev?.confidence)
                       return (
-                        <div key={kr.id} className="flex items-center gap-3 py-2 border-t border-gray-50">
+                        <div key={kr.id} className="flex items-center gap-4 py-2 border-t border-gray-50">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-700 truncate">{kr.title}</p>
                           </div>
                           {latest ? (
-                            <div className="flex items-center gap-3 shrink-0">
-                              <div className="text-right">
-                                <p className="text-xs text-gray-400">Progress</p>
-                                <p className="text-sm font-medium text-gray-900">{latest.progress}%</p>
+                            <div className="flex items-center gap-4 shrink-0">
+                              <div className="w-40">
+                                <div className="flex items-center justify-between text-xs text-gray-400 mb-0.5">
+                                  <span className="flex items-center gap-1">
+                                    Progress <TrendIndicator trend={progressTrend} />
+                                  </span>
+                                  <span className="text-gray-700 font-medium">{latest.progress}%</span>
+                                </div>
+                                <ProgressBar value={latest.progress} size="sm" showValue={false} />
                               </div>
-                              <div className="text-right">
-                                <p className="text-xs text-gray-400">Confidence</p>
-                                <p className="text-sm font-medium text-gray-900">{latest.confidence}%</p>
+                              <div className="w-40">
+                                <div className="flex items-center justify-between text-xs text-gray-400 mb-0.5">
+                                  <span className="flex items-center gap-1">
+                                    Confidence <TrendIndicator trend={confidenceTrend} />
+                                  </span>
+                                  <span className="text-gray-700 font-medium">{latest.confidence}%</span>
+                                </div>
+                                <ProgressBar value={latest.confidence} size="sm" showValue={false} />
                               </div>
                             </div>
                           ) : (

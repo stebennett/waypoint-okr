@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { formatDate } from '@/lib/utils'
+import { getSession } from '@/lib/auth/session'
 import { QuarterDetailClient } from './QuarterDetailClient'
 
 export const dynamic = 'force-dynamic'
@@ -15,11 +14,13 @@ export default async function QuarterDetailPage({
 }) {
   const { id } = await params
   const sp = await searchParams
-  const quarter = await prisma.quarter.findUnique({ where: { id } })
+  const [quarter, teams, tags, session] = await Promise.all([
+    prisma.quarter.findUnique({ where: { id } }),
+    prisma.team.findMany({ orderBy: { name: 'asc' } }),
+    prisma.tag.findMany({ orderBy: { name: 'asc' } }),
+    getSession(),
+  ])
   if (!quarter) notFound()
-
-  const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } })
-  const tags = await prisma.tag.findMany({ orderBy: { name: 'asc' } })
 
   const where: Record<string, unknown> = { quarterId: id }
   if (sp.teamId) where.teamId = sp.teamId
@@ -37,6 +38,8 @@ export default async function QuarterDetailPage({
     orderBy: [{ level: 'asc' }, { createdAt: 'asc' }],
   })
 
+  const role = (session?.user as { role?: string } | undefined)?.role ?? 'viewer'
+
   return (
     <QuarterDetailClient
       quarter={quarter}
@@ -45,6 +48,7 @@ export default async function QuarterDetailPage({
       tags={tags}
       selectedTeamId={sp.teamId ?? null}
       selectedTagId={sp.tagId ?? null}
+      role={role}
     />
   )
 }

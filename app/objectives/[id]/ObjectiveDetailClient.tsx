@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ProgressBar } from '@/app/components/ProgressBar'
+import { ProgressConfidenceChart } from '@/app/components/ProgressConfidenceChart'
 import { TagBadge } from '@/app/components/TagBadge'
 import { formatDate } from '@/lib/utils'
 
@@ -12,7 +13,6 @@ interface CheckIn {
   progress: number
   confidence: number
   notes?: string | null
-  checkedInBy?: string | null
   createdAt: string | Date
 }
 
@@ -52,7 +52,7 @@ interface Objective {
   closedAt?: string | Date | null
 }
 
-export function ObjectiveDetailClient({ objective: initial }: { objective: Objective }) {
+export function ObjectiveDetailClient({ objective: initial, role }: { objective: Objective; role: string }) {
   const [objective, setObjective] = useState(initial)
   const [showAddKR, setShowAddKR] = useState(false)
   const [newKRTitle, setNewKRTitle] = useState('')
@@ -73,7 +73,6 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
     })
     return data
   })
-  const [checkedInBy, setCheckedInBy] = useState('')
   const [closeNote, setCloseNote] = useState('')
   const [closingKRScores, setClosingKRScores] = useState<Record<string, string>>(() => {
     const scores: Record<string, string> = {}
@@ -85,6 +84,8 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
   })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const canMutate = role === 'okr_manager' || role === 'admin'
 
   async function addKR(e: React.FormEvent) {
     e.preventDefault()
@@ -131,7 +132,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
       const res = await fetch('/api/check-ins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ checkIns, checkedInBy }),
+        body: JSON.stringify({ checkIns }),
       })
       if (res.ok) {
         // Refresh objective data
@@ -194,6 +195,25 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
             latestCheckIns.filter((x) => x.latest).length
         )
       : 0
+
+  const objectiveChartPoints = (() => {
+    const byDate = new Map<string, { progress: number[]; confidence: number[]; date: Date }>()
+    for (const kr of objective.keyResults) {
+      for (const ci of kr.checkIns) {
+        const d = new Date(ci.createdAt)
+        const key = d.toISOString().slice(0, 10)
+        const entry = byDate.get(key) ?? { progress: [], confidence: [], date: d }
+        entry.progress.push(ci.progress)
+        entry.confidence.push(ci.confidence)
+        byDate.set(key, entry)
+      }
+    }
+    return Array.from(byDate.values()).map((e) => ({
+      date: e.date,
+      progress: Math.round(e.progress.reduce((s, v) => s + v, 0) / e.progress.length),
+      confidence: Math.round(e.confidence.reduce((s, v) => s + v, 0) / e.confidence.length),
+    }))
+  })()
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -267,6 +287,13 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
           </div>
         )}
 
+        {/* Objective-level progress/confidence chart */}
+        {objectiveChartPoints.length > 0 && (
+          <div className="mb-4">
+            <ProgressConfidenceChart points={objectiveChartPoints} />
+          </div>
+        )}
+
         {/* Close note */}
         {objective.status === 'closed' && objective.closeNote && (
           <div className="bg-gray-50 rounded-lg px-4 py-3 mb-4">
@@ -277,8 +304,8 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
           </div>
         )}
 
-        {/* Actions */}
-        {objective.status === 'active' && (
+        {/* Actions — okr_manager and admin only */}
+        {objective.status === 'active' && canMutate && (
           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
             <button
               onClick={() => setShowCheckIn(!showCheckIn)}
@@ -307,15 +334,6 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
         <div className="bg-white rounded-xl border border-indigo-200 p-6">
           <h2 className="font-semibold text-gray-900 mb-4">Check In</h2>
           <form onSubmit={submitCheckIn} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-              <input
-                value={checkedInBy}
-                onChange={(e) => setCheckedInBy(e.target.value)}
-                placeholder="Optional"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
-              />
-            </div>
             {objective.keyResults.map((kr) => (
               <div key={kr.id} className="border border-gray-100 rounded-lg p-4">
                 <p className="font-medium text-gray-800 text-sm mb-3">{kr.title}</p>
@@ -523,7 +541,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                         Final: {kr.finalScore}%
                       </span>
                     )}
-                    {objective.status === 'active' && (
+                    {objective.status === 'active' && canMutate && (
                       <button
                         onClick={() => deleteKR(kr.id)}
                         className="text-xs text-red-400 hover:text-red-600"
@@ -543,13 +561,27 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                   <p className="text-xs text-gray-400 mb-4 italic">No check-ins yet</p>
                 )}
 
-                {/* Check-in history */}
+                {/* Per-KR progress/confidence chart */}
                 {kr.checkIns.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
-                      History
-                    </p>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="mb-4">
+                    <ProgressConfidenceChart
+                      points={kr.checkIns.map((ci) => ({
+                        date: ci.createdAt,
+                        progress: ci.progress,
+                        confidence: ci.confidence,
+                      }))}
+                    />
+                  </div>
+                )}
+
+                {/* Check-in history (collapsed by default) */}
+                {kr.checkIns.length > 0 && (
+                  <details className="group">
+                    <summary className="cursor-pointer text-xs font-medium text-gray-400 uppercase tracking-wide select-none list-none flex items-center gap-1.5">
+                      <span className="inline-block transition-transform group-open:rotate-90">▸</span>
+                      History ({kr.checkIns.length})
+                    </summary>
+                    <div className="space-y-2 max-h-48 overflow-y-auto mt-2">
                       {kr.checkIns.map((ci) => (
                         <div key={ci.id} className="flex items-center gap-3 text-xs py-1.5 border-t border-gray-50">
                           <span className="text-gray-400 shrink-0 w-24">{formatDate(ci.createdAt)}</span>
@@ -559,16 +591,13 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                           <span className="text-gray-600">
                             Confidence: <span className="font-medium text-gray-900">{ci.confidence}%</span>
                           </span>
-                          {ci.checkedInBy && (
-                            <span className="text-gray-400">by {ci.checkedInBy}</span>
-                          )}
                           {ci.notes && (
                             <span className="text-gray-500 italic truncate">{ci.notes}</span>
                           )}
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </details>
                 )}
               </div>
             )

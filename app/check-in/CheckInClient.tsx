@@ -55,9 +55,10 @@ export function CheckInClient({
   objectives,
   activeQuarter,
   activeTeam,
-}: CheckInClientProps) {
+  role,
+}: CheckInClientProps & { role: string }) {
   const router = useRouter()
-  const [checkedInBy, setCheckedInBy] = useState('')
+  const canMutate = role === 'okr_manager' || role === 'admin'
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -120,7 +121,7 @@ export function CheckInClient({
       const res = await fetch('/api/check-ins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ checkIns, checkedInBy }),
+        body: JSON.stringify({ checkIns }),
       })
       if (!res.ok) {
         const d = await res.json()
@@ -230,25 +231,14 @@ export function CheckInClient({
           <p className="text-gray-400 mb-2">
             No active objectives for {activeTeam.name} in {activeQuarter.name}
           </p>
-          <Link href="/objectives/new" className="text-indigo-600 text-sm font-medium hover:text-indigo-700">
-            + Add objectives
-          </Link>
+          {canMutate && (
+            <Link href="/objectives/new" className="text-indigo-600 text-sm font-medium hover:text-indigo-700">
+              + Add objectives
+            </Link>
+          )}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Your name */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Your Name <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              value={checkedInBy}
-              onChange={(e) => setCheckedInBy(e.target.value)}
-              placeholder="e.g. Alex"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
-            />
-          </div>
-
           {/* Objectives and KRs */}
           {objectives.map((obj, objIndex) => (
             <div key={obj.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">

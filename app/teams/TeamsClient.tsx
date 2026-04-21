@@ -11,12 +11,20 @@ interface Team {
   _count: { objectives: number }
 }
 
-export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
+export function TeamsClient({
+  initialTeams,
+  role,
+}: {
+  initialTeams: Team[]
+  role: string
+}) {
   const [teams, setTeams] = useState(initialTeams)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const isAdmin = role === 'admin'
 
   async function createTeam(e: React.FormEvent) {
     e.preventDefault()
@@ -64,27 +72,29 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
         <p className="text-gray-500 text-sm mt-1">Manage your teams and their OKRs</p>
       </div>
 
-      {/* Create team form */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Create Team</h2>
-        <form onSubmit={createTeam} className="flex gap-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Team name"
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-            required
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-          >
-            {loading ? 'Creating…' : 'Create'}
-          </button>
-        </form>
-        {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
-      </div>
+      {/* Create team form — admin only */}
+      {isAdmin && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="font-semibold text-gray-900 mb-4">Create Team</h2>
+          <form onSubmit={createTeam} className="flex gap-3">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Team name"
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              required
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Creating…' : 'Create'}
+            </button>
+          </form>
+          {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+        </div>
+      )}
 
       {/* Teams list */}
       <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
@@ -109,12 +119,14 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
                 >
                   View →
                 </Link>
-                <button
-                  onClick={() => deleteTeam(team.id, team.name)}
-                  className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                >
-                  Delete
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => deleteTeam(team.id, team.name)}
+                    className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))

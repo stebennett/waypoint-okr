@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { getSession } from '@/lib/auth/session'
 import { CheckInClient } from './CheckInClient'
 
 export const dynamic = 'force-dynamic'
@@ -9,8 +10,11 @@ export default async function CheckInPage({
   searchParams: Promise<{ quarterId?: string; teamId?: string }>
 }) {
   const sp = await searchParams
-  const quarters = await prisma.quarter.findMany({ orderBy: { startDate: 'desc' } })
-  const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } })
+  const [quarters, teams, session] = await Promise.all([
+    prisma.quarter.findMany({ orderBy: { startDate: 'desc' } }),
+    prisma.team.findMany({ orderBy: { name: 'asc' } }),
+    getSession(),
+  ])
 
   const activeQuarter =
     quarters.find((q) => q.id === sp.quarterId) ||
@@ -37,6 +41,8 @@ export default async function CheckInPage({
         })
       : []
 
+  const role = (session?.user as { role?: string } | undefined)?.role ?? 'viewer'
+
   return (
     <CheckInClient
       quarters={quarters}
@@ -44,6 +50,7 @@ export default async function CheckInPage({
       objectives={objectives}
       activeQuarter={activeQuarter ?? null}
       activeTeam={activeTeam}
+      role={role}
     />
   )
 }

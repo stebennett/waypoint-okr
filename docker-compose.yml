@@ -12,11 +12,18 @@ services:
     environment:
       DATABASE_URL: file:/data/okr.db
       NODE_ENV: production
+      AUTH_SECRET: "${AUTH_SECRET:?AUTH_SECRET is required}"
+      AUTH_URL: "${AUTH_URL:-http://localhost:3000}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
+      ADMIN_INITIAL_PASSWORD: "${ADMIN_INITIAL_PASSWORD:-}"
+      # Optional — activates Slack login when both are set
+      SLACK_CLIENT_ID: "${SLACK_CLIENT_ID:-}"
+      SLACK_CLIENT_SECRET: "${SLACK_CLIENT_SECRET:-}"
     volumes:
       - ./data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/quarters"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

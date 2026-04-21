@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
+import { getSession } from '@/lib/auth/session'
 import { TeamDetailClient } from './TeamDetailClient'
 
 export const dynamic = 'force-dynamic'
@@ -13,10 +14,13 @@ export default async function TeamDetailPage({
 }) {
   const { id } = await params
   const sp = await searchParams
-  const team = await prisma.team.findUnique({ where: { id } })
+  const [team, quarters, session] = await Promise.all([
+    prisma.team.findUnique({ where: { id } }),
+    prisma.quarter.findMany({ orderBy: { startDate: 'desc' } }),
+    getSession(),
+  ])
   if (!team) notFound()
 
-  const quarters = await prisma.quarter.findMany({ orderBy: { startDate: 'desc' } })
   const activeQuarter =
     quarters.find((q) => q.id === sp.quarterId) ||
     quarters.find((q) => q.status === 'active') ||
@@ -37,12 +41,15 @@ export default async function TeamDetailPage({
       })
     : []
 
+  const role = (session?.user as { role?: string } | undefined)?.role ?? 'viewer'
+
   return (
     <TeamDetailClient
       team={team}
       quarters={quarters}
       activeQuarter={activeQuarter ?? null}
       objectives={objectives}
+      role={role}
     />
   )
 }
