@@ -51,6 +51,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   providers,
   pages: { signIn: "/login" },
+  logger: {
+    // Auth.js logs every failed credentials login as an error; that's a
+    // user action (wrong password), not a fault worth paging on.
+    error(error) {
+      if (error.name === "CredentialsSignin") return
+      console.error(error)
+    },
+  },
   callbacks: {
     async signIn({ user, account }) {
       // Slack provider: only allow if a matching User record already exists (invite-only).

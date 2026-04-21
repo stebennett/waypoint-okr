@@ -101,12 +101,14 @@ export function DashboardClient({ quarters, activeQuarter, objectives, role }: D
               </option>
             ))}
           </select>
-          <Link
-            href="/check-in"
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap"
-          >
-            ✓ Weekly Check-in
-          </Link>
+          {canMutate && (
+            <Link
+              href="/check-in"
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap"
+            >
+              ✓ Weekly Check-in
+            </Link>
+          )}
           {canMutate && (
             <Link
               href="/objectives/new"
