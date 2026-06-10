@@ -10,6 +10,7 @@ A full-stack OKR (Objectives and Key Results) management application built with 
 - **Weekly Check-in** — Polished check-in flow with sliders for progress and confidence
 - **Tag Management** — Colour-coded tags for categorising objectives
 - **Alignment** — Link team objectives to company objectives
+- **JIRA Sync** — Optionally link a key result to a JIRA JQL query and populate progress from the share of Done issues, on demand via a Sync button
 - **Progress Visualisation** — Red/amber/green progress bars throughout
 
 ---
@@ -44,11 +45,29 @@ Open [http://localhost:3000](http://localhost:3000).
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | Prisma database URL | `file:./dev.db` |
+| `JIRA_BASE_URL` | JIRA site URL for KR sync, e.g. `https://yourcompany.atlassian.net` (optional) | — |
+| `JIRA_EMAIL` | JIRA account email for Basic auth (optional) | — |
+| `JIRA_API_TOKEN` | JIRA API token (optional) | — |
 
 Create a `.env` file in the project root:
 
 ```env
 DATABASE_URL="file:./dev.db"
+```
+
+### JIRA Sync (optional)
+
+Set the three `JIRA_*` variables to enable syncing key result progress from JIRA.
+Link a key result to a JQL query on the objective detail page, then click **⟳ Sync**:
+Waypoint counts the issues matching the query and those with `statusCategory = Done`,
+and records `done / total` as a new check-in (e.g. "JIRA sync: 5 of 8 issues done").
+Progress only updates when you click Sync — there is no background polling.
+
+### Tests
+
+```bash
+npm test          # Run the Vitest suite once
+npm run test:watch
 ```
 
 ---
