@@ -30,6 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       data: {
         title: body.title.trim(),
         description: body.description?.trim() || null,
+        jiraJql: body.jiraJql?.trim() || null,
         objectiveId: id,
       },
       include: {
