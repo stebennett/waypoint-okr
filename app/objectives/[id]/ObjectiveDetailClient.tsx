@@ -20,6 +20,8 @@ interface KeyResult {
   id: string
   title: string
   description?: string | null
+  jiraJql?: string | null
+  jiraSyncedAt?: string | Date | null
   checkIns: CheckIn[]
   finalScore?: number | null
   closeNote?: string | null
@@ -57,6 +59,11 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
   const [showAddKR, setShowAddKR] = useState(false)
   const [newKRTitle, setNewKRTitle] = useState('')
   const [newKRDesc, setNewKRDesc] = useState('')
+  const [newKRJql, setNewKRJql] = useState('')
+  const [jiraEditId, setJiraEditId] = useState<string | null>(null)
+  const [jiraDraft, setJiraDraft] = useState('')
+  const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [syncErrors, setSyncErrors] = useState<Record<string, string>>({})
   const [showCheckIn, setShowCheckIn] = useState(false)
   const [showClose, setShowClose] = useState(false)
   const [checkInData, setCheckInData] = useState<
@@ -94,7 +101,11 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
       const res = await fetch(`/api/objectives/${objective.id}/key-results`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newKRTitle, description: newKRDesc || null }),
+        body: JSON.stringify({
+          title: newKRTitle,
+          description: newKRDesc || null,
+          jiraJql: newKRJql || null,
+        }),
       })
       if (res.ok) {
         const kr = await res.json()
@@ -103,6 +114,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
         setClosingKRScores((s) => ({ ...s, [kr.id]: '0' }))
         setNewKRTitle('')
         setNewKRDesc('')
+        setNewKRJql('')
         setShowAddKR(false)
         router.refresh()
       }
@@ -116,6 +128,50 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
     await fetch(`/api/key-results/${krId}`, { method: 'DELETE' })
     setObjective((o) => ({ ...o, keyResults: o.keyResults.filter((kr) => kr.id !== krId) }))
     router.refresh()
+  }
+
+  function updateKR(updated: KeyResult) {
+    setObjective((o) => ({
+      ...o,
+      keyResults: o.keyResults.map((kr) => (kr.id === updated.id ? updated : kr)),
+    }))
+  }
+
+  async function saveJiraJql(krId: string, jql: string) {
+    const res = await fetch(`/api/key-results/${krId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jiraJql: jql }),
+    })
+    if (res.ok) {
+      updateKR(await res.json())
+      setJiraEditId(null)
+      setJiraDraft('')
+      router.refresh()
+    }
+  }
+
+  async function syncKR(krId: string) {
+    setSyncingId(krId)
+    setSyncErrors((e) => ({ ...e, [krId]: '' }))
+    try {
+      const res = await fetch(`/api/key-results/${krId}/sync`, { method: 'POST' })
+      const body = await res.json()
+      if (res.ok) {
+        updateKR(body.keyResult)
+        setCheckInData((d) => ({
+          ...d,
+          [krId]: { ...d[krId], progress: body.sync.progress },
+        }))
+        router.refresh()
+      } else {
+        setSyncErrors((e) => ({ ...e, [krId]: body.error ?? 'Sync failed' }))
+      }
+    } catch {
+      setSyncErrors((e) => ({ ...e, [krId]: 'Sync failed' }))
+    } finally {
+      setSyncingId(null)
+    }
   }
 
   async function submitCheckIn(e: React.FormEvent) {
@@ -414,6 +470,18 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">JIRA Query (JQL)</label>
+              <input
+                value={newKRJql}
+                onChange={(e) => setNewKRJql(e.target.value)}
+                placeholder='Optional, e.g. project = ABC AND fixVersion = "1.0"'
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-indigo-500 outline-none"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Link a JQL query to sync progress from the share of Done issues.
+              </p>
+            </div>
             <div className="flex gap-3">
               <button
                 type="submit"
@@ -541,6 +609,89 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                   </div>
                 ) : (
                   <p className="text-xs text-gray-400 mb-4 italic">No check-ins yet</p>
+                )}
+
+                {/* JIRA link & sync */}
+                {objective.status === 'active' && (
+                  <div className="mb-4">
+                    {jiraEditId === kr.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          value={jiraDraft}
+                          onChange={(e) => setJiraDraft(e.target.value)}
+                          placeholder='JQL, e.g. project = ABC AND fixVersion = "1.0"'
+                          className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-mono focus:border-indigo-500 outline-none"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => saveJiraJql(kr.id, jiraDraft)}
+                          className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-700"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setJiraEditId(null)
+                            setJiraDraft('')
+                          }}
+                          className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1.5"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : kr.jiraJql ? (
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium shrink-0">
+                            JIRA
+                          </span>
+                          <code className="text-xs text-gray-600 truncate flex-1" title={kr.jiraJql}>
+                            {kr.jiraJql}
+                          </code>
+                          <button
+                            onClick={() => syncKR(kr.id)}
+                            disabled={syncingId === kr.id}
+                            className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 shrink-0"
+                          >
+                            {syncingId === kr.id ? 'Syncing…' : '⟳ Sync'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setJiraEditId(kr.id)
+                              setJiraDraft(kr.jiraJql ?? '')
+                            }}
+                            className="text-xs text-gray-400 hover:text-gray-600 shrink-0"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => saveJiraJql(kr.id, '')}
+                            className="text-xs text-gray-400 hover:text-red-600 shrink-0"
+                          >
+                            Unlink
+                          </button>
+                        </div>
+                        {kr.jiraSyncedAt && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            Last synced {formatDate(kr.jiraSyncedAt)}
+                          </p>
+                        )}
+                        {syncErrors[kr.id] && (
+                          <p className="text-xs text-red-600 mt-1">{syncErrors[kr.id]}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setJiraEditId(kr.id)
+                          setJiraDraft('')
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        🔗 Link JIRA query
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* Check-in history */}

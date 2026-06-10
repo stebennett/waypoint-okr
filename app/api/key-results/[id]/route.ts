@@ -8,6 +8,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const data: Record<string, unknown> = {}
     if (body.title !== undefined) data.title = body.title.trim()
     if (body.description !== undefined) data.description = body.description?.trim() || null
+    if (body.jiraJql !== undefined) data.jiraJql = body.jiraJql?.trim() || null
     if (body.finalScore !== undefined) data.finalScore = body.finalScore !== null ? Number(body.finalScore) : null
     if (body.closeNote !== undefined) data.closeNote = body.closeNote || null
 
