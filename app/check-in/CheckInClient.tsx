@@ -25,6 +25,7 @@ interface KeyResult {
   id: string
   title: string
   description?: string | null
+  jiraJql?: string | null
   checkIns: CheckIn[]
 }
 
@@ -61,6 +62,12 @@ export function CheckInClient({
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [jiraEditId, setJiraEditId] = useState<string | null>(null)
+  const [jiraDraft, setJiraDraft] = useState('')
+  const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [jiraMsg, setJiraMsg] = useState<Record<string, { ok: boolean; text: string }>>({})
+  // Local jiraJql edits, so saved queries show without waiting for a server refresh
+  const [jqlOverrides, setJqlOverrides] = useState<Record<string, string | null>>({})
 
   // Build initial check-in state from all KRs
   const [krData, setKrData] = useState<Record<string, KRCheckIn>>(() => {
@@ -98,6 +105,54 @@ export function CheckInClient({
 
   function updateKR(krId: string, field: keyof KRCheckIn, value: number | string) {
     setKrData((d) => ({ ...d, [krId]: { ...d[krId], [field]: value } }))
+  }
+
+  function jqlFor(kr: KeyResult): string | null {
+    return jqlOverrides[kr.id] !== undefined ? jqlOverrides[kr.id] : kr.jiraJql ?? null
+  }
+
+  async function saveJiraJql(krId: string) {
+    const res = await fetch(`/api/key-results/${krId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jiraJql: jiraDraft }),
+    })
+    if (res.ok) {
+      const kr = await res.json()
+      setJqlOverrides((o) => ({ ...o, [krId]: kr.jiraJql ?? null }))
+      setJiraEditId(null)
+      setJiraDraft('')
+      setJiraMsg((m) => ({ ...m, [krId]: { ok: true, text: kr.jiraJql ? 'JIRA query linked' : 'JIRA query removed' } }))
+      router.refresh()
+    } else {
+      setJiraMsg((m) => ({ ...m, [krId]: { ok: false, text: 'Failed to save JIRA query' } }))
+    }
+  }
+
+  async function syncKR(krId: string) {
+    setSyncingId(krId)
+    setJiraMsg((m) => ({ ...m, [krId]: { ok: true, text: '' } }))
+    try {
+      const res = await fetch(`/api/key-results/${krId}/sync`, { method: 'POST' })
+      const body = await res.json()
+      if (res.ok) {
+        updateKR(krId, 'progress', body.sync.progress)
+        setJiraMsg((m) => ({
+          ...m,
+          [krId]: {
+            ok: true,
+            text: `Synced: ${body.sync.done} of ${body.sync.total} issues done (${body.sync.progress}%)`,
+          },
+        }))
+        router.refresh()
+      } else {
+        setJiraMsg((m) => ({ ...m, [krId]: { ok: false, text: body.error ?? 'Sync failed' } }))
+      }
+    } catch {
+      setJiraMsg((m) => ({ ...m, [krId]: { ok: false, text: 'Sync failed' } }))
+    } finally {
+      setSyncingId(null)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -290,6 +345,81 @@ export function CheckInClient({
                             <div className="text-xs text-gray-400 shrink-0">
                               Last: {kr.checkIns[0].progress}% / {kr.checkIns[0].confidence}%
                             </div>
+                          )}
+                        </div>
+
+                        {/* JIRA link & sync */}
+                        <div className="mb-4">
+                          {jiraEditId === kr.id ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                value={jiraDraft}
+                                onChange={(e) => setJiraDraft(e.target.value)}
+                                placeholder='JQL, e.g. project = ABC AND fixVersion = "1.0" (leave empty to unlink)'
+                                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-mono focus:border-indigo-500 outline-none"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => saveJiraJql(kr.id)}
+                                className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-700"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setJiraEditId(null)
+                                  setJiraDraft('')
+                                }}
+                                className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1.5"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : jqlFor(kr) ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium shrink-0">
+                                JIRA
+                              </span>
+                              <code className="text-xs text-gray-600 truncate flex-1" title={jqlFor(kr) ?? ''}>
+                                {jqlFor(kr)}
+                              </code>
+                              <button
+                                type="button"
+                                onClick={() => syncKR(kr.id)}
+                                disabled={syncingId === kr.id}
+                                className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 shrink-0"
+                              >
+                                {syncingId === kr.id ? 'Syncing…' : '⟳ Sync'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setJiraEditId(kr.id)
+                                  setJiraDraft(jqlFor(kr) ?? '')
+                                }}
+                                className="text-xs text-gray-400 hover:text-gray-600 shrink-0"
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setJiraEditId(kr.id)
+                                setJiraDraft('')
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              🔗 Link JIRA query
+                            </button>
+                          )}
+                          {jiraMsg[kr.id]?.text && (
+                            <p className={`text-xs mt-1 ${jiraMsg[kr.id].ok ? 'text-green-600' : 'text-red-600'}`}>
+                              {jiraMsg[kr.id].text}
+                            </p>
                           )}
                         </div>
 

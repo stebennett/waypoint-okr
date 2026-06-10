@@ -83,6 +83,14 @@ Instance-wide configuration via environment variables (same pattern as `DATABASE
     failures render an inline error message. Last sync time shown via `jiraSyncedAt`.
 - Controls only render while the objective is `active`, matching existing behavior.
 
+## UI (CheckInClient)
+
+The weekly Check-In page gets the same per-KR controls, since it is the primary
+surface for working with current key results: link/edit a JQL inline (empty value
+unlinks), and a Sync button that records the JIRA-derived check-in and updates the
+progress slider to the synced value. All controls use `type="button"` so they don't
+submit the surrounding check-in form.
+
 ## Error handling
 
 - Unconfigured JIRA: sync button still renders; the route returns 503 and the UI shows
