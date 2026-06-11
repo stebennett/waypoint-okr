@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { signOutAction } from '@/app/actions/auth'
 
 const navItems = [
   { href: '/', label: 'Dashboard' },
@@ -11,7 +12,7 @@ const navItems = [
   { href: '/check-in', label: '✓ Check-in' },
 ]
 
-export function Nav() {
+export function Nav({ user }: { user?: { name?: string | null } | null }) {
   const pathname = usePathname()
 
   return (
@@ -40,6 +41,19 @@ export function Nav() {
                 </Link>
               )
             })}
+            {user && (
+              <div className="flex items-center gap-2 ml-3 pl-3 border-l border-gray-200">
+                <span className="text-sm text-gray-600">{user.name}</span>
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       </div>
