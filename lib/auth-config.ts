@@ -27,6 +27,62 @@ export function isPartialAuthConfig(
   return present > 0 && present < values.length
 }
 
+export interface IdentityRestrictions {
+  // Slack workspace (team) the user must belong to, from AUTH_SLACK_TEAM_ID.
+  allowedTeamId?: string
+  // Verified email domains the user must match, from AUTH_ALLOWED_EMAIL_DOMAINS.
+  allowedEmailDomains?: string[]
+}
+
+// Optional allow-list controls applied after a successful Slack sign-in. When
+// neither variable is set, any identity Slack authenticates is allowed (the
+// original behaviour). Setting either one tightens who may obtain a session:
+// a workspace-installed app still admits single/multi-channel guests, and a
+// distributed app admits any Slack account, unless these gate them out.
+export function getIdentityRestrictions(
+  env: Record<string, string | undefined> = process.env
+): IdentityRestrictions {
+  const allowedTeamId = env.AUTH_SLACK_TEAM_ID?.trim() || undefined
+  const allowedEmailDomains = env.AUTH_ALLOWED_EMAIL_DOMAINS?.split(',')
+    .map((domain) => domain.trim().toLowerCase().replace(/^@/, ''))
+    .filter(Boolean)
+  return {
+    allowedTeamId,
+    allowedEmailDomains:
+      allowedEmailDomains && allowedEmailDomains.length > 0
+        ? allowedEmailDomains
+        : undefined,
+  }
+}
+
+export interface SlackIdentity {
+  teamId?: string
+  email?: string
+  emailVerified?: boolean
+}
+
+// Returns true only if the identity satisfies every configured restriction.
+// Fails closed: when a restriction is configured but the corresponding claim
+// is missing, the identity is rejected.
+export function isAllowedIdentity(
+  identity: SlackIdentity,
+  restrictions: IdentityRestrictions
+): boolean {
+  if (restrictions.allowedTeamId) {
+    if (identity.teamId !== restrictions.allowedTeamId) return false
+  }
+
+  if (restrictions.allowedEmailDomains) {
+    if (!identity.email || identity.emailVerified !== true) return false
+    const domain = identity.email.toLowerCase().split('@')[1]
+    if (!domain || !restrictions.allowedEmailDomains.includes(domain)) {
+      return false
+    }
+  }
+
+  return true
+}
+
 const PUBLIC_PATHS = ['/login', '/api/auth', '/api/health']
 
 export function isPublicPath(pathname: string): boolean {
