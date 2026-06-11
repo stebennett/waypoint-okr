@@ -15,11 +15,15 @@ services:
       JIRA_BASE_URL: ${JIRA_BASE_URL:-}
       JIRA_EMAIL: ${JIRA_EMAIL:-}
       JIRA_API_TOKEN: ${JIRA_API_TOKEN:-}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_URL: ${AUTH_URL:-}
+      AUTH_SLACK_ID: ${AUTH_SLACK_ID:-}
+      AUTH_SLACK_SECRET: ${AUTH_SLACK_SECRET:-}
     volumes:
       - ./data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/quarters"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
