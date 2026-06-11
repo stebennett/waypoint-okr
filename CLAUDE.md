@@ -62,6 +62,13 @@ gates it: auth is enforced only when `AUTH_SLACK_ID`, `AUTH_SLACK_SECRET`, and
 and `/api/health` (public for Docker healthchecks); unauthenticated API calls
 get a 401, pages redirect to `/login?callbackUrl=…`.
 
+A `signIn` callback in `auth.ts` enforces optional allow-lists from
+`getIdentityRestrictions()`: `AUTH_SLACK_TEAM_ID` (single workspace) and
+`AUTH_ALLOWED_EMAIL_DOMAINS` (comma-separated verified email domains). With
+neither set, any Slack-authenticated identity is admitted; setting either gates
+out workspace guests / other workspaces. The check fails closed when a required
+claim is absent.
+
 ### Key Utilities
 
 `lib/prisma.ts` — Prisma singleton (required for Next.js hot reload compatibility)  

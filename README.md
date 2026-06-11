@@ -53,6 +53,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `AUTH_SLACK_SECRET` | Slack app Client Secret for login (optional) | — |
 | `AUTH_SECRET` | Secret for signing session tokens, e.g. `openssl rand -hex 32` (required for Slack login) | — |
 | `AUTH_URL` | Public URL of the app, e.g. `https://okr.example.com` (optional; auto-detected) | — |
+| `AUTH_SLACK_TEAM_ID` | Restrict login to a single Slack workspace ID, e.g. `T012AB3CD` (optional) | — |
+| `AUTH_ALLOWED_EMAIL_DOMAINS` | Comma-separated verified email domains allowed to sign in, e.g. `acme.com,acme.io` (optional) | — |
 
 Create a `.env` file in the project root:
 
@@ -87,6 +89,21 @@ open, as before.
 Sessions are stateless JWTs (no database tables). Signed-in users see their
 name and a Sign out button in the navigation bar. `/api/health` stays public
 for healthchecks.
+
+**Restricting who can sign in.** By default any Slack identity the app can
+authenticate gets a session — which, for a workspace-installed app, includes
+single- and multi-channel **guests**, and for a distributed app includes any
+Slack account. Set either control (or both) to limit access:
+
+- `AUTH_SLACK_TEAM_ID` — only members of that workspace may sign in. Find the
+  ID (starts with `T`) in Slack under your workspace's URL/admin, or in the
+  app's OAuth response.
+- `AUTH_ALLOWED_EMAIL_DOMAINS` — only users whose **verified** Slack email is
+  in one of the listed domains may sign in. This is the control that keeps
+  external guests out even within your own workspace.
+
+Anyone failing the configured checks is denied a session even after Slack
+authenticates them.
 
 ### Tests
 
