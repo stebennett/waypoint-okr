@@ -1,8 +1,14 @@
 import NextAuth from 'next-auth'
 import Slack from 'next-auth/providers/slack'
-import { getAuthConfig } from '@/lib/auth-config'
+import { getAuthConfig, isPartialAuthConfig } from '@/lib/auth-config'
 
 const config = getAuthConfig()
+
+if (!config && isPartialAuthConfig()) {
+  console.warn(
+    'Slack login is DISABLED: AUTH_SLACK_ID, AUTH_SLACK_SECRET, and AUTH_SECRET must all be set to enable it.'
+  )
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // The placeholder keeps NextAuth from throwing when auth is disabled;
