@@ -52,6 +52,16 @@ Pages in `app/` follow a consistent split:
 
 API routes live under `app/api/` and follow REST conventions. Routes accept query params for filtering (e.g., `?quarterId=`, `?teamId=`, `?level=`).
 
+### Authentication
+
+Optional Slack login via Auth.js (NextAuth v5) with JWT sessions — no auth
+database tables. `auth.ts` (root) holds the NextAuth setup; `lib/auth-config.ts`
+gates it: auth is enforced only when `AUTH_SLACK_ID`, `AUTH_SLACK_SECRET`, and
+`AUTH_SECRET` are all set, otherwise the app is open (same pattern as JIRA).
+`middleware.ts` protects every page and API route except `/login`, `/api/auth/*`,
+and `/api/health` (public for Docker healthchecks); unauthenticated API calls
+get a 401, pages redirect to `/login?callbackUrl=…`.
+
 ### Key Utilities
 
 `lib/prisma.ts` — Prisma singleton (required for Next.js hot reload compatibility)  

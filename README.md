@@ -11,6 +11,7 @@ A full-stack OKR (Objectives and Key Results) management application built with 
 - **Tag Management** — Colour-coded tags for categorising objectives
 - **Alignment** — Link team objectives to company objectives
 - **JIRA Sync** — Optionally link a key result to a JIRA JQL query and populate progress from the share of Done issues, on demand via a Sync button
+- **Slack Login** — Optionally protect the whole app behind "Sign in with Slack"
 - **Progress Visualisation** — Red/amber/green progress bars throughout
 
 ---
@@ -48,6 +49,10 @@ Open [http://localhost:3000](http://localhost:3000).
 | `JIRA_BASE_URL` | JIRA site URL for KR sync, e.g. `https://yourcompany.atlassian.net` (optional) | — |
 | `JIRA_EMAIL` | JIRA account email for Basic auth (optional) | — |
 | `JIRA_API_TOKEN` | JIRA API token (optional) | — |
+| `AUTH_SLACK_ID` | Slack app Client ID for login (optional) | — |
+| `AUTH_SLACK_SECRET` | Slack app Client Secret for login (optional) | — |
+| `AUTH_SECRET` | Secret for signing session tokens, e.g. `openssl rand -hex 32` (required for Slack login) | — |
+| `AUTH_URL` | Public URL of the app, e.g. `https://okr.example.com` (optional; auto-detected) | — |
 
 Create a `.env` file in the project root:
 
@@ -62,6 +67,26 @@ Link a key result to a JQL query on the objective detail page, then click **⟳ 
 Waypoint counts the issues matching the query and those with `statusCategory = Done`,
 and records `done / total` as a new check-in (e.g. "JIRA sync: 5 of 8 issues done").
 Progress only updates when you click Sync — there is no background polling.
+
+### Slack Login (optional)
+
+Waypoint can require users to sign in with Slack before accessing any page or
+API route. Authentication is enabled only when `AUTH_SLACK_ID`,
+`AUTH_SLACK_SECRET` and `AUTH_SECRET` are all set — otherwise the app stays
+open, as before.
+
+1. Create a Slack app at [api.slack.com/apps](https://api.slack.com/apps) in your workspace.
+2. Under **OAuth & Permissions**, add the redirect URL
+   `https://<your-host>/api/auth/callback/slack`. Slack requires **HTTPS**
+   redirect URLs, so local development needs a tunnel such as ngrok or
+   Cloudflare Tunnel.
+3. Copy the **Client ID** and **Client Secret** from **Basic Information**
+   into `AUTH_SLACK_ID` and `AUTH_SLACK_SECRET`.
+4. Generate a session secret: `openssl rand -hex 32` → `AUTH_SECRET`.
+
+Sessions are stateless JWTs (no database tables). Signed-in users see their
+name and a Sign out button in the navigation bar. `/api/health` stays public
+for healthchecks.
 
 ### Tests
 
@@ -130,7 +155,9 @@ docker run -d \
 okr-app/
 ├── app/
 │   ├── api/                    # API routes
+│   │   ├── auth/[...nextauth]/ # Auth.js (Slack login) handlers
 │   │   ├── check-ins/
+│   │   ├── health/             # Public healthcheck endpoint
 │   │   ├── key-results/[id]/
 │   │   ├── objectives/
 │   │   ├── quarters/
@@ -138,6 +165,7 @@ okr-app/
 │   │   └── teams/
 │   ├── check-in/               # Weekly check-in page
 │   ├── components/             # Shared UI components
+│   ├── login/                  # Slack sign-in page
 │   ├── objectives/
 │   │   ├── [id]/               # Objective detail
 │   │   └── new/                # Create objective
@@ -149,8 +177,12 @@ okr-app/
 │   ├── layout.tsx
 │   └── page.tsx                # Dashboard
 ├── lib/
+│   ├── auth-config.ts          # Slack login env validation + public paths
+│   ├── jira.ts                 # JIRA sync client
 │   ├── prisma.ts               # Prisma client singleton
 │   └── utils.ts                # Shared utilities
+├── auth.ts                     # Auth.js (NextAuth) setup
+├── middleware.ts               # Session enforcement when login is enabled
 ├── prisma/
 │   ├── migrations/
 │   └── schema.prisma           # Database schema
@@ -192,6 +224,7 @@ okr-app/
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **Database:** SQLite (via Prisma ORM)
+- **Auth:** Auth.js (NextAuth v5) with Slack OIDC, optional
 - **Runtime:** Node.js 20
 - **Containerisation:** Docker + Docker Compose
 - **CI:** GitHub Actions (lint, type-check, build on PRs)
