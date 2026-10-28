@@ -129,7 +129,7 @@ export function NewObjectiveClient({
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             placeholder="e.g. Increase customer satisfaction"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
             required
           />
         </div>
@@ -142,7 +142,7 @@ export function NewObjectiveClient({
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             placeholder="Why this objective matters…"
             rows={3}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden resize-none"
           />
         </div>
 
@@ -182,7 +182,7 @@ export function NewObjectiveClient({
             <select
               value={form.teamId}
               onChange={(e) => setForm({ ...form, teamId: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
               required
             >
               <option value="">Select a team…</option>
@@ -203,7 +203,7 @@ export function NewObjectiveClient({
           <select
             value={form.quarterId}
             onChange={(e) => setForm({ ...form, quarterId: e.target.value, parentId: '' })}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
             required
           >
             <option value="">Select a quarter…</option>
@@ -227,7 +227,7 @@ export function NewObjectiveClient({
                   onClick={() => toggleTag(tag.id)}
                   className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-all ${
                     form.tagIds.includes(tag.id)
-                      ? 'text-white ring-2 ring-offset-1'
+                      ? 'text-white ring-2 ring-indigo-500/50 ring-offset-1'
                       : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
                   }`}
                   style={
@@ -252,7 +252,7 @@ export function NewObjectiveClient({
             <select
               value={form.parentId}
               onChange={(e) => setForm({ ...form, parentId: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
             >
               <option value="">None</option>
               {alignableObjectives.map((o) => (

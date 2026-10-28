@@ -243,7 +243,7 @@ export function CheckInClient({
                 if (activeTeam) params.set('teamId', activeTeam.id)
                 router.push(`/check-in?${params.toString()}`)
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden"
             >
               <option value="">Select quarter…</option>
               {quarters.map((q) => (
@@ -263,7 +263,7 @@ export function CheckInClient({
                 if (e.target.value) params.set('teamId', e.target.value)
                 router.push(`/check-in?${params.toString()}`)
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden"
             >
               <option value="">Select team…</option>
               {teams.map((t) => (
@@ -300,7 +300,7 @@ export function CheckInClient({
               value={checkedInBy}
               onChange={(e) => setCheckedInBy(e.target.value)}
               placeholder="e.g. Alex"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden"
             />
           </div>
 
@@ -356,7 +356,7 @@ export function CheckInClient({
                                 value={jiraDraft}
                                 onChange={(e) => setJiraDraft(e.target.value)}
                                 placeholder='JQL, e.g. project = ABC AND fixVersion = "1.0" (leave empty to unlink)'
-                                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-mono focus:border-indigo-500 outline-none"
+                                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-mono focus:border-indigo-500 outline-hidden"
                                 autoFocus
                               />
                               <button
@@ -458,7 +458,7 @@ export function CheckInClient({
                                 onChange={(e) =>
                                   updateKR(kr.id, 'progress', Math.min(100, Math.max(0, Number(e.target.value))))
                                 }
-                                className="w-16 rounded border border-gray-200 px-2 py-1 text-xs text-center focus:border-indigo-500 outline-none bg-white"
+                                className="w-16 rounded border border-gray-200 px-2 py-1 text-xs text-center focus:border-indigo-500 outline-hidden bg-white"
                               />
                               <div className={`flex-1 h-1.5 rounded-full overflow-hidden bg-gray-200`}>
                                 <div
@@ -502,7 +502,7 @@ export function CheckInClient({
                                 onChange={(e) =>
                                   updateKR(kr.id, 'confidence', Math.min(100, Math.max(0, Number(e.target.value))))
                                 }
-                                className="w-16 rounded border border-gray-200 px-2 py-1 text-xs text-center focus:border-indigo-500 outline-none bg-white"
+                                className="w-16 rounded border border-gray-200 px-2 py-1 text-xs text-center focus:border-indigo-500 outline-hidden bg-white"
                               />
                               <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-gray-200">
                                 <div
@@ -519,7 +519,7 @@ export function CheckInClient({
                           value={data.notes}
                           onChange={(e) => updateKR(kr.id, 'notes', e.target.value)}
                           placeholder="Notes for this week… (optional)"
-                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 outline-none text-gray-700 placeholder-gray-300"
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden text-gray-700 placeholder-gray-300"
                         />
                       </div>
                     )

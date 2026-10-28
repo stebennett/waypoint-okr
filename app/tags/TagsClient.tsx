@@ -78,7 +78,7 @@ export function TagsClient({ initialTags }: { initialTags: Tag[] }) {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Tag name"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
               required
             />
             <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3">

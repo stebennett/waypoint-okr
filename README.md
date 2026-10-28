@@ -161,8 +161,8 @@ okr-app/
 ├── Dockerfile
 ├── docker-entrypoint.sh
 ├── next.config.ts
-├── prisma.config.ts            # Prisma CLI config (schema, migrations, DATABASE_URL)
-└── tailwind.config.ts
+├── postcss.config.mjs          # Tailwind v4 via @tailwindcss/postcss (theme lives in app/globals.css)
+└── prisma.config.ts            # Prisma CLI config (schema, migrations, DATABASE_URL)
 ```
 
 ---
@@ -192,7 +192,7 @@ okr-app/
 
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS
+- **Styling:** Tailwind CSS v4
 - **Database:** SQLite (via Prisma ORM 7 with the better-sqlite3 driver adapter)
 - **Runtime:** Node.js 22
 - **Containerisation:** Docker + Docker Compose
