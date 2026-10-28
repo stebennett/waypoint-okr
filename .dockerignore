@@ -1,0 +1,10 @@
+node_modules
+.next
+lib/generated
+.env
+.env.local
+*.db
+*.db-journal
+data
+.git
+.vscode

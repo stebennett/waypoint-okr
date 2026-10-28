@@ -1,13 +1,14 @@
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat openssl
+FROM node:22-alpine AS deps
+# Build tools let better-sqlite3 compile if no prebuilt musl binary is available
+RUN apk add --no-cache libc6-compat openssl python3 make g++
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
 RUN npm ci --legacy-peer-deps
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 RUN apk add --no-cache openssl
 WORKDIR /app
 
@@ -20,8 +21,18 @@ ENV DATABASE_URL="file:/tmp/build.db"
 RUN npx prisma generate
 RUN npm run build
 
-# Stage 3: Runner
-FROM node:20-alpine AS runner
+# Stage 3: Prisma CLI for running migrations at container start
+FROM node:22-alpine AS migrator
+WORKDIR /migrator
+
+COPY package-lock.json ./
+RUN PRISMA_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/prisma'].version") \
+ && DOTENV_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/dotenv'].version") \
+ && echo '{"private":true}' > package.json \
+ && npm install --omit=dev --no-audit --no-fund prisma@$PRISMA_VERSION dotenv@$DOTENV_VERSION
+
+# Stage 4: Runner
+FROM node:22-alpine AS runner
 RUN apk add --no-cache openssl
 WORKDIR /app
 
@@ -41,11 +52,10 @@ RUN mkdir -p /data && chown nextjs:nodejs /data
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Copy Prisma files (needed for migrations at runtime)
+# Copy Prisma CLI, config and migrations (needed for migrations at runtime)
+COPY --from=migrator /migrator/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 # Copy entrypoint
 COPY docker-entrypoint.sh ./
