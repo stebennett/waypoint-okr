@@ -19,7 +19,7 @@ A full-stack OKR (Objectives and Key Results) management application built with 
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22.18+ (required by Prisma 7)
 - npm
 
 ### Setup
@@ -44,7 +44,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | Prisma database URL | `file:./dev.db` |
+| `DATABASE_URL` | SQLite database URL; relative paths resolve from the project root | `file:./prisma/dev.db` |
 | `JIRA_BASE_URL` | JIRA site URL for KR sync, e.g. `https://yourcompany.atlassian.net` (optional) | — |
 | `JIRA_EMAIL` | JIRA account email for Basic auth (optional) | — |
 | `JIRA_API_TOKEN` | JIRA API token (optional) | — |
@@ -52,7 +52,7 @@ Open [http://localhost:3000](http://localhost:3000).
 Create a `.env` file in the project root:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="file:./prisma/dev.db"
 ```
 
 ### JIRA Sync (optional)
@@ -149,7 +149,8 @@ okr-app/
 │   ├── layout.tsx
 │   └── page.tsx                # Dashboard
 ├── lib/
-│   ├── prisma.ts               # Prisma client singleton
+│   ├── generated/prisma/       # Generated Prisma client (gitignored; `npx prisma generate`)
+│   ├── prisma.ts               # Prisma client singleton (better-sqlite3 driver adapter)
 │   └── utils.ts                # Shared utilities
 ├── prisma/
 │   ├── migrations/
@@ -160,6 +161,7 @@ okr-app/
 ├── Dockerfile
 ├── docker-entrypoint.sh
 ├── next.config.ts
+├── prisma.config.ts            # Prisma CLI config (schema, migrations, DATABASE_URL)
 └── tailwind.config.ts
 ```
 
@@ -191,7 +193,7 @@ okr-app/
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
-- **Database:** SQLite (via Prisma ORM)
-- **Runtime:** Node.js 20
+- **Database:** SQLite (via Prisma ORM 7 with the better-sqlite3 driver adapter)
+- **Runtime:** Node.js 22
 - **Containerisation:** Docker + Docker Compose
 - **CI:** GitHub Actions (lint, type-check, build on PRs)
