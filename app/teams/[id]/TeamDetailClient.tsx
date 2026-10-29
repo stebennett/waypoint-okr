@@ -71,7 +71,7 @@ export function TeamDetailClient({ team, quarters, activeQuarter, objectives }: 
             <select
               value={activeQuarter.id}
               onChange={(e) => router.push(`/teams/${team.id}?quarterId=${e.target.value}`)}
-              className="block rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+              className="block rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500"
             >
               {quarters.map((q) => (
                 <option key={q.id} value={q.id}>

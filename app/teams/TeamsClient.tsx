@@ -72,7 +72,7 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Team name"
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
             required
           />
           <button

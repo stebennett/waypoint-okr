@@ -369,7 +369,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                 value={checkedInBy}
                 onChange={(e) => setCheckedInBy(e.target.value)}
                 placeholder="Optional"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden"
               />
             </div>
             {objective.keyResults.map((kr) => (
@@ -422,7 +422,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                       [kr.id]: { ...d[kr.id], notes: e.target.value },
                     }))
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden"
                 />
               </div>
             ))}
@@ -457,7 +457,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                 value={newKRTitle}
                 onChange={(e) => setNewKRTitle(e.target.value)}
                 placeholder="e.g. Increase NPS score to 50"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden"
                 required
               />
             </div>
@@ -467,7 +467,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                 value={newKRDesc}
                 onChange={(e) => setNewKRDesc(e.target.value)}
                 placeholder="Optional details"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden"
               />
             </div>
             <div>
@@ -476,7 +476,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                 value={newKRJql}
                 onChange={(e) => setNewKRJql(e.target.value)}
                 placeholder='Optional, e.g. project = ABC AND fixVersion = "1.0"'
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-indigo-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-indigo-500 outline-hidden"
               />
               <p className="text-xs text-gray-400 mt-1">
                 Link a JQL query to sync progress from the share of Done issues.
@@ -521,7 +521,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                     max="100"
                     value={closingKRScores[kr.id] ?? ''}
                     onChange={(e) => setClosingKRScores((s) => ({ ...s, [kr.id]: e.target.value }))}
-                    className="w-20 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 outline-none"
+                    className="w-20 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 outline-hidden"
                   />
                 </div>
               </div>
@@ -533,7 +533,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                 onChange={(e) => setCloseNote(e.target.value)}
                 placeholder="What did you learn? What was achieved?"
                 rows={3}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-none resize-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 outline-hidden resize-none"
               />
             </div>
             <div className="flex gap-3">
@@ -620,7 +620,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                           value={jiraDraft}
                           onChange={(e) => setJiraDraft(e.target.value)}
                           placeholder='JQL, e.g. project = ABC AND fixVersion = "1.0"'
-                          className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-mono focus:border-indigo-500 outline-none"
+                          className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-mono focus:border-indigo-500 outline-hidden"
                           autoFocus
                         />
                         <button
@@ -743,7 +743,7 @@ export function ObjectiveDetailClient({ objective: initial }: { objective: Objec
                 <Link
                   key={child.id}
                   href={`/objectives/${child.id}`}
-                  className="flex items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 p-4 hover:border-indigo-200 hover:shadow-sm transition-all"
+                  className="flex items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 p-4 hover:border-indigo-200 hover:shadow-xs transition-all"
                 >
                   <div>
                     <p className="text-xs text-indigo-600 font-medium mb-0.5">{child.team?.name}</p>
