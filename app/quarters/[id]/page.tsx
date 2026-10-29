@@ -1,7 +1,5 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { formatDate } from '@/lib/utils'
 import { QuarterDetailClient } from './QuarterDetailClient'
 
 export const dynamic = 'force-dynamic'
