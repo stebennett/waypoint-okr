@@ -28,7 +28,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^18.0.0",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^15.5.15",
+    "eslint-config-next": "^16.0.0",
     "postcss": "^8",
     "prisma": "^7.10.1",
     "tailwindcss": "^4.0.0",
