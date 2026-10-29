@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { progressColor, progressTextColor, progressBgLight } from '@/lib/utils'
@@ -50,6 +50,22 @@ type KRCheckIn = {
   notes: string
 }
 
+// Seed check-in form state from each KR's latest check-in
+function buildKrData(objectives: Objective[]): Record<string, KRCheckIn> {
+  const data: Record<string, KRCheckIn> = {}
+  objectives.forEach((obj) => {
+    obj.keyResults.forEach((kr) => {
+      const latest = kr.checkIns[0]
+      data[kr.id] = {
+        progress: latest?.progress ?? 0,
+        confidence: latest?.confidence ?? 50,
+        notes: '',
+      }
+    })
+  })
+  return data
+}
+
 export function CheckInClient({
   quarters,
   teams,
@@ -69,39 +85,16 @@ export function CheckInClient({
   // Local jiraJql edits, so saved queries show without waiting for a server refresh
   const [jqlOverrides, setJqlOverrides] = useState<Record<string, string | null>>({})
 
-  // Build initial check-in state from all KRs
-  const [krData, setKrData] = useState<Record<string, KRCheckIn>>(() => {
-    const data: Record<string, KRCheckIn> = {}
-    objectives.forEach((obj) => {
-      obj.keyResults.forEach((kr) => {
-        const latest = kr.checkIns[0]
-        data[kr.id] = {
-          progress: latest?.progress ?? 0,
-          confidence: latest?.confidence ?? 50,
-          notes: '',
-        }
-      })
-    })
-    return data
-  })
+  const [krData, setKrData] = useState<Record<string, KRCheckIn>>(() => buildKrData(objectives))
 
   // Reset form when objectives change (team/quarter switch)
-  useEffect(() => {
-    const data: Record<string, KRCheckIn> = {}
-    objectives.forEach((obj) => {
-      obj.keyResults.forEach((kr) => {
-        const latest = kr.checkIns[0]
-        data[kr.id] = {
-          progress: latest?.progress ?? 0,
-          confidence: latest?.confidence ?? 50,
-          notes: '',
-        }
-      })
-    })
-    setKrData(data)
+  const [prevObjectives, setPrevObjectives] = useState(objectives)
+  if (objectives !== prevObjectives) {
+    setPrevObjectives(objectives)
+    setKrData(buildKrData(objectives))
     setSubmitted(false)
     setError('')
-  }, [objectives])
+  }
 
   function updateKR(krId: string, field: keyof KRCheckIn, value: number | string) {
     setKrData((d) => ({ ...d, [krId]: { ...d[krId], [field]: value } }))
