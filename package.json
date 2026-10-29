@@ -26,12 +26,23 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19",
     "dotenv": "^18.0.0",
-    "eslint": "^9.39.4",
+    "eslint": "^10.0.0",
     "eslint-config-next": "^16.0.0",
     "postcss": "^8",
     "prisma": "^7.10.1",
     "tailwindcss": "^4.0.0",
     "typescript": "^5",
     "vitest": "^4.1.8"
+  },
+  "overrides": {
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-import": {
+      "eslint": "$eslint"
+    }
   }
 }
